@@ -733,7 +733,7 @@ export default function Dashboard({
                         Entradas no Mês
                       </span>
                       <h3 className="text-4xl font-extrabold tracking-tight mt-3 text-gradient-emerald">
-                        {formatMoney(monthlyIncome)}
+                        {formatMoney(monthlyIncomeRealized)}
                       </h3>
                     </div>
                     <span className="p-3 bg-emerald-500/10 border border-emerald-500/15 rounded-2xl text-emerald-400">
@@ -742,8 +742,8 @@ export default function Dashboard({
                   </div>
                   <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-2">
                     <div className="flex flex-col">
-                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Realizado</span>
-                      <span className="text-[10px] font-bold text-emerald-400">{formatMoney(monthlyIncomeRealized)}</span>
+                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Total</span>
+                      <span className="text-[10px] font-bold text-emerald-400/50">{formatMoney(monthlyIncome)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Previsto</span>
@@ -761,7 +761,7 @@ export default function Dashboard({
                         Saídas no Mês
                       </span>
                       <h3 className="text-4xl font-extrabold tracking-tight mt-3 text-gradient-rose">
-                        {formatMoney(monthlyExpense)}
+                        {formatMoney(monthlyExpenseRealized)}
                       </h3>
                     </div>
                     <span className="p-3 bg-rose-500/10 border border-rose-500/15 rounded-2xl text-rose-400">
@@ -770,8 +770,8 @@ export default function Dashboard({
                   </div>
                   <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-2">
                     <div className="flex flex-col">
-                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Realizado</span>
-                      <span className="text-[10px] font-bold text-rose-400">{formatMoney(monthlyExpenseRealized)}</span>
+                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Total</span>
+                      <span className="text-[10px] font-bold text-rose-400/50">{formatMoney(monthlyExpense)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Previsto</span>
@@ -782,28 +782,28 @@ export default function Dashboard({
 
                 {/* Balanço Mensal */}
                 <div className="glass glass-hover p-6 rounded-[24px] relative overflow-hidden flex flex-col justify-between h-40 group cursor-default">
-                  <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none transition-all duration-300 ${monthlyBalance >= 0 ? "bg-emerald-500/5 group-hover:bg-emerald-500/10" : "bg-rose-500/5 group-hover:bg-rose-500/10"}`} />
+                  <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none transition-all duration-300 ${monthlyBalanceRealized >= 0 ? "bg-emerald-500/5 group-hover:bg-emerald-500/10" : "bg-rose-500/5 group-hover:bg-rose-500/10"}`} />
                   <div className="flex justify-between items-start z-10">
                     <div>
                       <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] block select-none">
                         Balanço no Mês
                       </span>
-                      <h3 className="text-4xl font-extrabold tracking-tight mt-3 text-gradient-apple">
-                        {formatMoney(monthlyBalance)}
+                      <h3 className={`text-4xl font-extrabold tracking-tight mt-3 ${monthlyBalanceRealized >= 0 ? "text-gradient-emerald" : "text-gradient-rose"}`}>
+                        {monthlyBalanceRealized >= 0 ? "" : "-"}{formatMoney(Math.abs(monthlyBalanceRealized))}
                       </h3>
                     </div>
-                    <span className={`p-3 border rounded-2xl transition-colors ${monthlyBalance >= 0 ? 'bg-emerald-500/10 border-emerald-500/15 text-emerald-400' : 'bg-rose-500/10 border-rose-500/15 text-rose-400'}`}>
+                    <span className={`p-3 border rounded-2xl ${monthlyBalanceRealized >= 0 ? "bg-emerald-500/10 border-emerald-500/15 text-emerald-400" : "bg-rose-500/10 border-rose-500/15 text-rose-400"}`}>
                       <BarChart3 className="w-4.5 h-4.5" />
                     </span>
                   </div>
                   <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-2">
                     <div className="flex flex-col">
-                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Realizado</span>
-                      <span className={`text-[10px] font-bold ${monthlyBalanceRealized >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatMoney(monthlyBalanceRealized)}</span>
+                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Total</span>
+                      <span className={`text-[10px] font-bold ${monthlyBalance >= 0 ? "text-emerald-400/50" : "text-rose-400/50"}`}>{formatMoney(monthlyBalance)}</span>
                     </div>
                     <div className="flex flex-col text-right">
                       <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.1em]">Previsto</span>
-                      <span className={`text-[10px] font-bold ${monthlyBalanceExpected >= 0 ? 'text-emerald-500/50' : 'text-rose-500/50'}`}>{formatMoney(monthlyBalanceExpected)}</span>
+                      <span className={`text-[10px] font-bold ${monthlyBalanceExpected >= 0 ? "text-emerald-500/50" : "text-rose-500/50"}`}>{formatMoney(monthlyBalanceExpected)}</span>
                     </div>
                   </div>
                 </div>
@@ -951,7 +951,7 @@ export default function Dashboard({
                 <div className="flex items-start justify-between z-10">
                   <div>
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] block select-none">Entradas no Mês</span>
-                    <h3 className="text-xl font-extrabold tracking-tight mt-1 text-gradient-emerald">{formatMoney(monthlyIncome)}</h3>
+                    <h3 className="text-xl font-extrabold tracking-tight mt-1 text-gradient-emerald">{formatMoney(monthlyIncomeRealized)}</h3>
                   </div>
                   <span className="p-2.5 bg-emerald-500/10 border border-emerald-500/15 rounded-xl text-emerald-400">
                     <TrendingUp className="w-4 h-4" />
@@ -960,7 +960,7 @@ export default function Dashboard({
                 <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-auto">
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Real: {formatMoney(monthlyIncomeRealized)}</span>
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Total: {formatMoney(monthlyIncome)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
@@ -974,7 +974,7 @@ export default function Dashboard({
                 <div className="flex items-start justify-between z-10">
                   <div>
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] block select-none">Saídas no Mês</span>
-                    <h3 className="text-xl font-extrabold tracking-tight mt-1 text-gradient-rose">{formatMoney(monthlyExpense)}</h3>
+                    <h3 className="text-xl font-extrabold tracking-tight mt-1 text-gradient-rose">{formatMoney(monthlyExpenseRealized)}</h3>
                   </div>
                   <span className="p-2.5 bg-rose-500/10 border border-rose-500/15 rounded-xl text-rose-400">
                     <TrendingDown className="w-4 h-4" />
@@ -983,7 +983,7 @@ export default function Dashboard({
                 <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-auto">
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Real: {formatMoney(monthlyExpenseRealized)}</span>
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Total: {formatMoney(monthlyExpense)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
@@ -993,20 +993,22 @@ export default function Dashboard({
               </div>
 
               <div className="glass p-4 rounded-[20px] relative overflow-hidden flex flex-col justify-between group h-28">
-                <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-xl pointer-events-none ${monthlyBalance >= 0 ? "bg-emerald-500/5" : "bg-rose-500/5"}`} />
+                <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-xl pointer-events-none ${monthlyBalanceRealized >= 0 ? "bg-emerald-500/5" : "bg-rose-500/5"}`} />
                 <div className="flex items-start justify-between z-10">
                   <div>
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] block select-none">Balanço do Mês</span>
-                    <h3 className="text-xl font-extrabold tracking-tight mt-1 text-gradient-apple">{formatMoney(monthlyBalance)}</h3>
+                    <h3 className={`text-xl font-extrabold tracking-tight mt-1 ${monthlyBalanceRealized >= 0 ? "text-gradient-emerald" : "text-gradient-rose"}`}>
+                      {monthlyBalanceRealized >= 0 ? "" : "-"}{formatMoney(Math.abs(monthlyBalanceRealized))}
+                    </h3>
                   </div>
-                  <span className={`p-2.5 border rounded-xl ${monthlyBalance >= 0 ? 'bg-emerald-500/10 border-emerald-500/15 text-emerald-400' : 'bg-rose-500/10 border-rose-500/15 text-rose-400'}`}>
+                  <span className={`p-2.5 border rounded-xl ${monthlyBalanceRealized >= 0 ? 'bg-emerald-500/10 border-emerald-500/15 text-emerald-400' : 'bg-rose-500/10 border-rose-500/15 text-rose-400'}`}>
                     <BarChart3 className="w-4 h-4" />
                   </span>
                 </div>
                 <div className="flex justify-between items-center w-full z-10 border-t border-white/[0.03] pt-2 mt-auto">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${monthlyBalanceRealized >= 0 ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
-                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Real: {formatMoney(monthlyBalanceRealized)}</span>
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.1em]">Total: {formatMoney(monthlyBalance)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${monthlyBalanceExpected >= 0 ? 'bg-emerald-600' : 'bg-rose-600'}`}></span>
