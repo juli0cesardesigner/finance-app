@@ -742,6 +742,27 @@ export default function Home() {
     );
   };
 
+  const handleAddAccount = (accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
+    const newAccount = {
+      id: `acc-${Date.now()}`,
+      name: accountData.name,
+      type: accountData.type,
+      balance_cents: accountData.balance_cents,
+      entity_id: selectedEntityId === "all" ? "ent-1" : selectedEntityId,
+    };
+    setAccounts((prev) => [...prev, newAccount]);
+  };
+
+  const handleEditAccount = (id: string, accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
+    setAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === id
+          ? { ...acc, ...accountData }
+          : acc
+      )
+    );
+  };
+
   const handleDeleteCard = (id: string) => {
     setAccounts((prev) => prev.filter((acc) => acc.id !== id));
   };
@@ -941,6 +962,9 @@ export default function Home() {
         onAddCard={handleAddCard}
         onEditCard={handleEditCard}
         onDeleteCard={handleDeleteCard}
+        onAddAccount={handleAddAccount}
+        onEditAccount={handleEditAccount}
+        onDeleteAccount={handleDeleteCard}
         onReset={handleReset}
         selectedEntityId={selectedEntityId}
         onEntityChange={setSelectedEntityId}

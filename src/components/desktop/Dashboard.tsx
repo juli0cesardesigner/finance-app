@@ -125,6 +125,9 @@ interface DashboardProps {
     closing_date: number;
   }) => void;
   onDeleteCard?: (id: string) => void;
+  onAddAccount?: (accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => void;
+  onEditAccount?: (id: string, accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => void;
+  onDeleteAccount?: (id: string) => void;
   onReset?: (target: "transactions" | "cards" | "categories" | "entities" | "all") => void;
   onClearTransaction?: (id: string) => void;
 }
@@ -154,6 +157,9 @@ export default function Dashboard({
   onDeleteTransaction,
   onEditCard,
   onDeleteCard,
+  onAddAccount,
+  onEditAccount,
+  onDeleteAccount,
   onReset,
   onClearTransaction,
 }: DashboardProps) {
@@ -179,6 +185,19 @@ export default function Dashboard({
   const [editCardClosing, setEditCardClosing] = useState("5");
   const [editCardDue, setEditCardDue] = useState("10");
   const [confirmDeleteCardId, setConfirmDeleteCardId] = useState<string | null>(null);
+
+  // Estados locais para criação de conta
+  const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountType, setNewAccountType] = useState<"cash" | "bank">("bank");
+  const [newAccountBalance, setNewAccountBalance] = useState("");
+
+  // Estados locais para edição e exclusão inline de conta
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [editAccountName, setEditAccountName] = useState("");
+  const [editAccountType, setEditAccountType] = useState<"cash" | "bank">("bank");
+  const [editAccountBalance, setEditAccountBalance] = useState("");
+  const [confirmDeleteAccountId, setConfirmDeleteAccountId] = useState<string | null>(null);
 
   // Controle de sanfona para faturas de cartões
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
@@ -264,6 +283,37 @@ export default function Dashboard({
     if (!editingEntityName.trim()) return;
     onEditEntity?.(id, editingEntityName.trim(), editingEntityType);
     setEditingEntityId(null);
+  };
+
+  const handleAddAccountSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAccountName) return;
+    onAddAccount?.({
+      name: newAccountName,
+      type: newAccountType,
+      balance_cents: Number(newAccountBalance) * 100 || 0,
+    });
+    setNewAccountName("");
+    setNewAccountBalance("");
+    setIsAddAccountOpen(false);
+  };
+
+  const startEditAccount = (acc: Account) => {
+    setEditingAccountId(acc.id);
+    setEditAccountName(acc.name);
+    setEditAccountType(acc.type as "cash" | "bank");
+    setEditAccountBalance((acc.balance_cents / 100).toString());
+  };
+
+  const saveEditAccount = () => {
+    if (editingAccountId) {
+      onEditAccount?.(editingAccountId, {
+        name: editAccountName,
+        type: editAccountType,
+        balance_cents: Number(editAccountBalance) * 100 || 0,
+      });
+      setEditingAccountId(null);
+    }
   };
 
   // Estados locais para controle de categorias
@@ -1378,37 +1428,208 @@ export default function Dashboard({
 
         {/* 2.3 CONTEÚDO DA ABA CONTAS */}
         {activeTab === "contas" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+          <div className="space-y-6 animate-fadeIn">
+            {/* Cabeçalho interno com Ação de Adicionar Conta */}
+            <div className="flex justify-between items-center bg-zinc-950/40 p-4 border border-zinc-900 rounded-2xl">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                Contas e Carteiras
+              </span>
+              <button
+                onClick={() => setIsAddAccountOpen(!isAddAccountOpen)}
+                className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-black uppercase tracking-wider text-zinc-350 hover:bg-zinc-800 hover:text-white active:scale-95 transition-all"
+              >
+                {isAddAccountOpen ? "Cancelar" : "+ Adicionar Conta"}
+              </button>
+            </div>
+
+            {/* Formulário de Adicionar Conta */}
+            {isAddAccountOpen && (
+              <form
+                onSubmit={handleAddAccountSubmit}
+                className="glass p-6 rounded-3xl max-w-xl space-y-4 border border-zinc-800"
+              >
+                <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 border-b border-zinc-900 pb-2">
+                  Configurar Nova Conta
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                      Nome da Conta
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Nubank, Carteira Física"
+                      value={newAccountName}
+                      onChange={(e) => setNewAccountName(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                      Tipo de Conta
+                    </label>
+                    <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 relative">
+                      {/* Switch Background */}
+                      <div
+                        className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-zinc-700 rounded-lg transition-all duration-300 ease-out"
+                        style={{
+                          left: newAccountType === "bank" ? "4px" : "calc(50%)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewAccountType("bank")}
+                        className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider relative z-10 transition-colors duration-300 ${
+                          newAccountType === "bank" ? "text-white" : "text-zinc-500 hover:text-zinc-400"
+                        }`}
+                      >
+                        Banco (Digital)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewAccountType("cash")}
+                        className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-wider relative z-10 transition-colors duration-300 ${
+                          newAccountType === "cash" ? "text-white" : "text-zinc-500 hover:text-zinc-400"
+                        }`}
+                      >
+                        Dinheiro Físico
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                      Saldo Inicial (R$)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 1000"
+                      value={newAccountBalance}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9-]/g, "");
+                        setNewAccountBalance(raw);
+                      }}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-white hover:bg-zinc-200 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl active:scale-98 transition-all mt-2"
+                >
+                  Salvar Conta
+                </button>
+              </form>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {accounts
               .filter((acc) => acc.type !== "credit_card")
               .map((acc) => (
                 <div
                   key={acc.id}
-                  className="glass glass-hover p-6 rounded-[24px] space-y-5 relative overflow-hidden group cursor-default"
+                  className="glass glass-hover p-6 rounded-[24px] space-y-5 relative overflow-hidden group cursor-default flex flex-col justify-between"
                 >
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/3 rounded-full blur-2xl pointer-events-none group-hover:bg-white/5 transition-all duration-300" />
                   <div className="flex justify-between items-start z-10 relative">
                     <div>
-                      <h4 className="text-base font-extrabold text-zinc-100">{acc.name}</h4>
+                      {editingAccountId === acc.id ? (
+                        <input
+                          type="text"
+                          value={editAccountName}
+                          onChange={(e) => setEditAccountName(e.target.value)}
+                          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded px-2 py-1 outline-none w-full mb-2"
+                          autoFocus
+                        />
+                      ) : (
+                        <h4 className="text-base font-extrabold text-zinc-100">{acc.name}</h4>
+                      )}
                       <span className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500 block mt-1 select-none">
                         {acc.type === "bank" ? "Método PIX" : "Dinheiro Físico"}
                       </span>
                     </div>
-                    <span className="p-2.5 rounded-xl text-xs border border-white/5 bg-white/3 text-zinc-300">
-                      <Wallet className="w-4 h-4 animate-float" />
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {/* Lixeira */}
+                      <button
+                        onClick={() =>
+                          setConfirmDeleteAccountId(
+                            confirmDeleteAccountId === acc.id ? null : acc.id
+                          )
+                        }
+                        title="Excluir conta"
+                        className="p-2 rounded-xl border border-white/5 bg-white/3 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      {/* Lápis */}
+                      <button
+                        onClick={() =>
+                          editingAccountId === acc.id
+                            ? saveEditAccount()
+                            : startEditAccount(acc)
+                        }
+                        title={editingAccountId === acc.id ? "Salvar" : "Editar conta"}
+                        className="p-2 rounded-xl border border-white/5 bg-white/3 text-zinc-400 hover:text-white hover:bg-white/8 active:scale-90 transition-all cursor-pointer"
+                      >
+                        {editingAccountId === acc.id ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Pencil className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <span className="p-2.5 rounded-xl text-xs border border-white/5 bg-white/3 text-zinc-300">
+                        <Wallet className="w-4 h-4 animate-float" />
+                      </span>
+                    </div>
                   </div>
 
                   <div className="border-t border-white/[0.03] pt-4 z-10 relative">
                     <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.18em] block select-none">
                       Saldo Disponível
                     </span>
-                    <span className="text-2xl font-black block mt-1.5 text-gradient-apple">
-                      {formatMoney(acc.balance_cents)}
-                    </span>
+                    {editingAccountId === acc.id ? (
+                      <input
+                        type="text"
+                        value={editAccountBalance}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^0-9-]/g, "");
+                          setEditAccountBalance(raw);
+                        }}
+                        className="bg-zinc-900 border border-zinc-700 text-white text-lg font-black rounded px-2 py-1 outline-none w-full mt-1.5"
+                      />
+                    ) : (
+                      <span className="text-2xl font-black block mt-1.5 text-gradient-apple">
+                        {formatMoney(acc.balance_cents)}
+                      </span>
+                    )}
                   </div>
+                  {confirmDeleteAccountId === acc.id && (
+                    <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-md z-20 flex flex-col justify-center items-center p-4 rounded-[24px] animate-fadeIn">
+                      <p className="text-xs font-bold text-red-400 mb-3 text-center">
+                        Excluir esta conta permanentemente?
+                      </p>
+                      <div className="flex gap-2 w-full">
+                        <button
+                          onClick={() => setConfirmDeleteAccountId(null)}
+                          className="flex-1 py-2 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-white transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => {
+                            onDeleteAccount?.(acc.id);
+                            setConfirmDeleteAccountId(null);
+                          }}
+                          className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-[10px] font-black uppercase tracking-wider text-white transition-all"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
           </div>
         )}
 
