@@ -732,12 +732,15 @@ export default function Home() {
   };
 
   const handleReset = async (target: "transactions" | "cards" | "categories" | "entities" | "all") => {
+    console.log("Executando reset para:", target);
+    
     if (target === "transactions" || target === "all") {
       setTransactions([]);
       try {
         await db.cacheTransactions([]);
+        await db.clearOfflineTransactions();
       } catch (e) {
-        console.error(e);
+        console.error("Erro limpando transações:", e);
       }
       setBudgets((prev) => prev.map((b) => ({ ...b, spent_amount_cents: 0 })));
     }
@@ -755,6 +758,33 @@ export default function Home() {
     if (target === "all") {
       setAccounts(DEFAULT_ACCOUNTS);
       setBudgets(DEFAULT_BUDGETS);
+      try {
+        await db.clearAllCaches();
+        localStorage.clear(); // Oblitera tudo no domínio
+        
+        // Tentativa agressiva de deletar o IndexedDB do localforage
+        const req = indexedDB.deleteDatabase("findom-db");
+        req.onsuccess = () => {
+          console.log("IndexedDB deletado com sucesso");
+          window.location.reload();
+        };
+        req.onerror = () => {
+          console.log("Erro ao deletar IndexedDB");
+          window.location.reload();
+        };
+        req.onblocked = () => {
+          console.log("Deleção do IndexedDB bloqueada");
+          window.location.reload();
+        };
+        
+        // Fallback caso as callbacks do indexedDB falhem
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } catch (e) {
+        console.error("Erro no reset total:", e);
+        window.location.reload();
+      }
     }
   };
 
