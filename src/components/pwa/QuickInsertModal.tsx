@@ -416,11 +416,7 @@ export default function QuickInsertModal({
           >
             <div className="space-y-6">
               {/* Valor do Lançamento */}
-              <div className={`text-center py-6 px-4 rounded-3xl border relative overflow-hidden mb-2 ${
-                type === "income" 
-                  ? "bg-blue-950/10 border-blue-500/20 shadow-[inset_0_1px_0_rgba(59,130,246,0.1)]" 
-                  : "bg-red-950/10 border-red-500/20 shadow-[inset_0_1px_0_rgba(239,68,68,0.1)]"
-              }`}>
+              <div className="text-center py-6 mb-2">
                 <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${type === "income" ? "text-blue-500/70" : "text-red-500/70"}`}>
                   {type === "income" ? "Valor da Entrada" : "Valor da Saída"}
                 </span>
@@ -434,7 +430,7 @@ export default function QuickInsertModal({
                     inputMode="numeric"
                     value={getFormattedValue()}
                     onChange={handleInputChange}
-                    className={`text-center text-4.5xl font-black tracking-tighter bg-transparent border-none outline-none focus:outline-none focus:ring-0 flex-1 min-w-0 ${
+                    className={`text-center text-6xl md:text-7xl font-black tracking-tighter bg-transparent border-none outline-none focus:outline-none focus:ring-0 flex-1 min-w-0 ${
                       type === "income" ? "text-blue-400" : "text-red-400"
                     }`}
                     required
