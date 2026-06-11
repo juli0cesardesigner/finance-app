@@ -332,19 +332,30 @@ export default function Home() {
     interval?: "weekly" | "monthly" | "yearly";
     cleared?: boolean;
     entity_id?: string;
-  }) => {
+  }, editScope?: "single" | "future" | "all") => {
     if (editingTransaction) {
       try {
         const oldTx = editingTransaction;
         const isSeriesEdit = oldTx.parent_transaction_id !== undefined;
-        const siblings = isSeriesEdit
-          ? transactions.filter((t) => t.parent_transaction_id === oldTx.parent_transaction_id)
+        const allSiblings = isSeriesEdit
+          ? transactions.filter((t) => t.parent_transaction_id === oldTx.parent_transaction_id || t.id === oldTx.parent_transaction_id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
           : [oldTx];
 
-        // 1. Reverter impactos de todas as transações antigas (siblings)
+        let targetSiblings = [...allSiblings];
+        
+        if (editScope === "single") {
+          targetSiblings = [oldTx];
+        } else if (editScope === "future") {
+          const oldTxDate = new Date(oldTx.date).getTime();
+          targetSiblings = allSiblings.filter(t => new Date(t.date).getTime() >= oldTxDate);
+        } else {
+          targetSiblings = allSiblings;
+        }
+
+        // 1. Reverter impactos apenas dos targetSiblings
         setAccounts((prev) => {
           let updated = [...prev];
-          for (const sib of siblings) {
+          for (const sib of targetSiblings) {
             if (sib.cleared) {
               const wasIncome = categories.find((c) => c.id === sib.category_id)?.type === "income";
               const isOldCard = updated.find((a) => a.id === sib.account_id)?.type === "credit_card";
@@ -362,7 +373,7 @@ export default function Home() {
 
         setBudgets((prev) => {
           let updated = [...prev];
-          for (const sib of siblings) {
+          for (const sib of targetSiblings) {
             const wasExpense = categories.find((c) => c.id === sib.category_id)?.type === "expense";
             if (wasExpense) {
               updated = updated.map((b) =>
@@ -380,48 +391,43 @@ export default function Home() {
         const txsToCreate: LocalTransaction[] = [];
         const baseDesc = data.description.replace(/\s\(\d+\/\d+\)$/, ""); // Limpa sufixos
         
-        if (data.recurrence_type === "single" || !data.recurrence_type) {
+        if (editScope === "single" || !data.recurrence_type || data.recurrence_type === "single") {
+          // Apenas edita esta ocorrência, mantendo os dados da série original se houver
           txsToCreate.push({
             ...oldTx,
             amount_cents: data.amount_cents,
             category_id: data.category_id,
             account_id: data.account_id,
-            description: baseDesc,
+            description: oldTx.recurrence_type === "installment" ? `${baseDesc} (${oldTx.installment_number || 1}/${oldTx.installments_total || 1})` : baseDesc,
             date: data.date,
-            cleared: data.cleared ?? false,
-            recurrence_type: "single",
-            installments_total: undefined,
-            installment_number: undefined,
-            interval: undefined,
-            parent_transaction_id: undefined,
+            cleared: data.cleared ?? oldTx.cleared,
+            // Keep previous recurrence fields
+            recurrence_type: oldTx.recurrence_type,
+            installments_total: oldTx.installments_total,
+            installment_number: oldTx.installment_number,
+            interval: oldTx.interval,
+            parent_transaction_id: oldTx.parent_transaction_id,
           });
-        } else if (data.recurrence_type === "fixed") {
-          for (let i = 0; i < 12; i++) {
-            const futureDateStr = addIntervalToDate(data.date, i, data.interval || "monthly");
-            const existingId = siblings[i]?.id || crypto.randomUUID();
-            txsToCreate.push({
-              ...oldTx,
-              id: existingId,
-              amount_cents: data.amount_cents,
-              category_id: data.category_id,
-              account_id: data.account_id,
-              description: baseDesc,
-              date: futureDateStr,
-              cleared: i === 0 ? (data.cleared ?? false) : (siblings[i]?.cleared ?? false),
-              recurrence_type: "fixed",
-              interval: data.interval,
-              parent_transaction_id: parentId,
-            });
-          }
-        } else if (data.recurrence_type === "installment") {
-          const totalInstallments = data.installments_total || 3;
-          const installmentAmount = Math.round(data.amount_cents / totalInstallments);
+        } else {
+          // future ou all
+          const startIndex = editScope === "future" ? allSiblings.findIndex(t => t.id === oldTx.id) : 0;
+          const totalTxsToCreate = editScope === "future" ? allSiblings.length - startIndex : (data.recurrence_type === "installment" ? (data.installments_total || 3) : 12);
+          const originalTotal = data.installments_total || oldTx.installments_total || 3;
+          
+          const installmentAmount = data.recurrence_type === "installment" ? Math.round(data.amount_cents / originalTotal) : data.amount_cents;
 
-          for (let i = 0; i < totalInstallments; i++) {
-            const futureDateStr = addIntervalToDate(data.date, i, data.interval || "monthly");
-            const existingId = siblings[i]?.id || crypto.randomUUID();
-            const isLast = i === totalInstallments - 1;
-            const currentAmount = isLast ? data.amount_cents - (installmentAmount * (totalInstallments - 1)) : installmentAmount;
+          for (let i = 0; i < totalTxsToCreate; i++) {
+            const absoluteIndex = startIndex + i;
+            const futureDateStr = addIntervalToDate(data.date, i, data.interval || oldTx.interval || "monthly");
+            
+            const existingSib = allSiblings[absoluteIndex];
+            const existingId = existingSib?.id || crypto.randomUUID();
+            
+            let currentAmount = data.amount_cents;
+            if (data.recurrence_type === "installment") {
+              const isLast = absoluteIndex === originalTotal - 1;
+              currentAmount = isLast ? data.amount_cents - (installmentAmount * (originalTotal - 1)) : installmentAmount;
+            }
 
             txsToCreate.push({
               ...oldTx,
@@ -429,12 +435,12 @@ export default function Home() {
               amount_cents: currentAmount,
               category_id: data.category_id,
               account_id: data.account_id,
-              description: `${baseDesc} (${i + 1}/${totalInstallments})`,
+              description: data.recurrence_type === "installment" ? `${baseDesc} (${absoluteIndex + 1}/${originalTotal})` : baseDesc,
               date: futureDateStr,
-              cleared: i === 0 ? (data.cleared ?? false) : (siblings[i]?.cleared ?? false),
-              recurrence_type: "installment",
-              installments_total: totalInstallments,
-              installment_number: i + 1,
+              cleared: i === 0 && editScope === "all" ? (data.cleared ?? false) : (existingSib?.cleared ?? false),
+              recurrence_type: data.recurrence_type,
+              installments_total: data.recurrence_type === "installment" ? originalTotal : undefined,
+              installment_number: data.recurrence_type === "installment" ? absoluteIndex + 1 : undefined,
               interval: data.interval,
               parent_transaction_id: parentId,
             });
@@ -476,8 +482,8 @@ export default function Home() {
         });
 
         // 4. Atualizar a lista de transações
-        const siblingIds = new Set(siblings.map((s) => s.id));
-        const otherTxs = transactions.filter((t) => !siblingIds.has(t.id));
+        const targetSiblingIds = new Set(targetSiblings.map((s) => s.id));
+        const otherTxs = transactions.filter((t) => !targetSiblingIds.has(t.id));
         const updatedTxs = [...otherTxs, ...txsToCreate];
 
         setTransactions(updatedTxs);

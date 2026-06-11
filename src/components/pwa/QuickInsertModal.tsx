@@ -105,7 +105,7 @@ interface QuickInsertModalProps {
     cleared?: boolean;
     entity_id: string;
     notes?: string;
-  }) => void;
+  }, editScope?: "single" | "future" | "all") => void;
   onAddCategory?: (category: Omit<Category, "id">) => void;
   editingTransaction?: any;
   defaultEntityId?: string;
@@ -136,6 +136,7 @@ export default function QuickInsertModal({
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const [isEntityDropdownOpen, setIsEntityDropdownOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [pendingSaveData, setPendingSaveData] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [recurrenceType, setRecurrenceType] = useState<"single" | "fixed" | "installment">("single");
@@ -369,7 +370,7 @@ export default function QuickInsertModal({
     const isValid = isoDate && !isNaN(new Date(isoDate).getTime());
     const finalDate = isValid ? isoDate : new Date().toISOString().split("T")[0];
 
-    onSave({
+    const payload = {
       amount_cents,
       category_id: selectedCategory,
       account_id: matchedAccount.id,
@@ -381,8 +382,22 @@ export default function QuickInsertModal({
       cleared: isCleared,
       entity_id: selectedEntityId,
       notes: notes.trim(),
-    });
+    };
+
+    if (editingTransaction && (editingTransaction.recurrence_type === "fixed" || editingTransaction.recurrence_type === "installment")) {
+      setPendingSaveData(payload);
+      return;
+    }
+
+    onSave(payload, "single");
     onClose();
+  };
+
+  const handleScopeSelection = (scope: "single" | "future" | "all") => {
+    if (pendingSaveData) {
+      onSave(pendingSaveData, scope);
+      onClose();
+    }
   };
 
   return (
@@ -409,13 +424,50 @@ export default function QuickInsertModal({
           <div className="flex justify-end px-6 pt-6 pb-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                if (pendingSaveData) {
+                  setPendingSaveData(null); // Go back to form
+                } else {
+                  onClose();
+                }
+              }}
               className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-full active:scale-95 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
+          {pendingSaveData ? (
+            <div className="flex-1 flex flex-col justify-center p-6 space-y-6">
+              <div className="text-center space-y-2 mb-4">
+                <h3 className="text-xl font-bold text-white tracking-tight">Como aplicar a edição?</h3>
+                <p className="text-sm text-zinc-400">Esta é uma transação recorrente.</p>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleScopeSelection("single")}
+                  className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer group"
+                >
+                  <span className="font-bold text-white group-hover:text-blue-400 transition-colors">Apenas este mês</span>
+                  <span className="text-[10px] text-zinc-500 font-medium">Os outros lançamentos não serão alterados</span>
+                </button>
+                <button
+                  onClick={() => handleScopeSelection("future")}
+                  className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer group"
+                >
+                  <span className="font-bold text-white group-hover:text-amber-400 transition-colors">Este e os futuros</span>
+                  <span className="text-[10px] text-zinc-500 font-medium">Lançamentos passados continuam iguais</span>
+                </button>
+                <button
+                  onClick={() => handleScopeSelection("all")}
+                  className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer group"
+                >
+                  <span className="font-bold text-white group-hover:text-rose-400 transition-colors">Todos os lançamentos</span>
+                  <span className="text-[10px] text-zinc-500 font-medium">Atualiza todo o histórico desta transação</span>
+                </button>
+              </div>
+            </div>
+          ) : (
           {/* Form */}
           <form
             onSubmit={handleSubmit}
@@ -1012,6 +1064,7 @@ export default function QuickInsertModal({
               </button>
             </div>
           </form>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>
