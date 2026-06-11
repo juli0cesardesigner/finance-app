@@ -390,7 +390,7 @@ export default function QuickInsertModal({
               ? { duration: 0.2, ease: "easeOut" }
               : { type: "spring", stiffness: 300, damping: 30 }
           }
-          className={`w-full max-w-md md:max-w-lg bg-[#09090b]/80 border border-white/10 rounded-t-[32px] md:rounded-[32px] flex flex-col overflow-hidden md:overflow-visible shadow-[0_30px_70px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-3xl relative`}
+          className={`w-full max-w-md md:max-w-2xl bg-[#09090b]/80 border border-white/10 rounded-t-[32px] md:rounded-[32px] flex flex-col overflow-hidden md:overflow-visible shadow-[0_30px_70px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-3xl relative`}
           style={isDesktop ? {} : { height: visibleHeight ? `${visibleHeight}px` : "100dvh" }}
         >
           {/* Subtle top indicator glow based on type */}
@@ -433,7 +433,7 @@ export default function QuickInsertModal({
                     className={`text-center font-black tracking-tighter bg-transparent border-none outline-none focus:outline-none focus:ring-0 flex-1 min-w-0 ${
                       type === "income" ? "text-blue-400" : "text-red-400"
                     }`}
-                    style={{ fontSize: "clamp(3.5rem, 10vw, 5.5rem)", lineHeight: 1 }}
+                    style={{ fontSize: "clamp(2.5rem, 8vw, 4.5rem)", lineHeight: 1 }}
                     required
                   />
 
