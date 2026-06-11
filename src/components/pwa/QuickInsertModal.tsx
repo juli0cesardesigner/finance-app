@@ -105,6 +105,7 @@ interface QuickInsertModalProps {
     cleared?: boolean;
     entity_id: string;
   }) => void;
+  onAddCategory?: (category: Omit<Category, "id">) => void;
   editingTransaction?: any;
   defaultEntityId?: string;
 }
@@ -117,10 +118,12 @@ export default function QuickInsertModal({
   accounts,
   entities,
   onSave,
+  onAddCategory,
   editingTransaction,
   defaultEntityId,
 }: QuickInsertModalProps) {
   const visibleHeight = useViewport();
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -606,6 +609,56 @@ export default function QuickInsertModal({
                             </button>
                           );
                         })}
+                        
+                        {/* Criar Nova Categoria Inline */}
+                        {onAddCategory && (
+                          <div className="p-2 mt-1">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Nova categoria..."
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    if (newCategoryName.trim()) {
+                                      onAddCategory({
+                                        name: newCategoryName.trim(),
+                                        type: type,
+                                        color: type === "income" ? "#3b82f6" : "#ef4444",
+                                        icon: "Tag"
+                                      });
+                                      setNewCategoryName("");
+                                    }
+                                  }
+                                }}
+                                className="flex-1 bg-[#050507]/60 border border-zinc-900 focus:border-zinc-800 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none shadow-inner"
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (newCategoryName.trim()) {
+                                    onAddCategory({
+                                      name: newCategoryName.trim(),
+                                      type: type,
+                                      color: type === "income" ? "#3b82f6" : "#ef4444",
+                                      icon: "Tag"
+                                    });
+                                    setNewCategoryName("");
+                                  }
+                                }}
+                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                                  type === "income" ? "bg-blue-600/20 text-blue-400 hover:bg-blue-600/30" : "bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                                }`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

@@ -919,6 +919,7 @@ export default function Home() {
           accounts={accounts}
           entities={entities}
           onSave={handleSaveTransaction}
+          onAddCategory={handleAddCategory}
           editingTransaction={editingTransaction}
           defaultEntityId={selectedEntityId === "all" ? "ent-1" : selectedEntityId}
         />
@@ -996,6 +997,7 @@ export default function Home() {
         accounts={accounts}
         entities={entities}
         onSave={handleSaveTransaction}
+        onAddCategory={handleAddCategory}
         editingTransaction={editingTransaction}
         defaultEntityId={selectedEntityId === "all" ? "ent-1" : selectedEntityId}
       />
