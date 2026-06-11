@@ -209,6 +209,23 @@ export default function Dashboard({
     }));
   };
 
+  // Helper para formatação de inputs de moeda
+  const getFormattedCurrency = (rawValue: string) => {
+    const numericValue = parseInt(rawValue || "0", 10);
+    const floatValue = numericValue / 100;
+    return floatValue.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const handleCurrencyInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const rawVal = e.target.value.replace(/\D/g, "");
+    if (rawVal.length <= 12) {
+      setter(rawVal);
+    }
+  };
+
   // Danger Zone state
   type ResetTarget = "transactions" | "cards" | "categories" | "entities" | "all";
   const [dangerSelection, setDangerSelection] = useState<Set<ResetTarget>>(new Set());
@@ -291,7 +308,7 @@ export default function Dashboard({
     onAddAccount?.({
       name: newAccountName,
       type: newAccountType,
-      balance_cents: Number(newAccountBalance) * 100 || 0,
+      balance_cents: Number(newAccountBalance) || 0,
     });
     setNewAccountName("");
     setNewAccountBalance("");
@@ -302,7 +319,7 @@ export default function Dashboard({
     setEditingAccountId(acc.id);
     setEditAccountName(acc.name);
     setEditAccountType(acc.type as "cash" | "bank");
-    setEditAccountBalance((acc.balance_cents / 100).toString());
+    setEditAccountBalance(acc.balance_cents.toString());
   };
 
   const saveEditAccount = () => {
@@ -310,7 +327,7 @@ export default function Dashboard({
       onEditAccount?.(editingAccountId, {
         name: editAccountName,
         type: editAccountType,
-        balance_cents: Number(editAccountBalance) * 100 || 0,
+        balance_cents: Number(editAccountBalance) || 0,
       });
       setEditingAccountId(null);
     }
@@ -376,14 +393,13 @@ export default function Dashboard({
 
   const handleAddCardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const limit_cents = parseInt(newCardLimit || "0", 10) * 100;
-    if (!newCardName || limit_cents <= 0) return;
+    if (!newCardName) return;
 
-    onAddCard({
+    onAddCard?.({
       name: newCardName,
-      limit_cents,
-      closing_date: parseInt(newCardClosing, 10),
-      due_date: parseInt(newCardDue, 10),
+      limit_cents: Number(newCardLimit) || 0,
+      due_date: Number(newCardDue),
+      closing_date: Number(newCardClosing),
     });
 
     setNewCardName("");
@@ -396,21 +412,20 @@ export default function Dashboard({
   const startEditCard = (acc: Account) => {
     setEditingCardId(acc.id);
     setEditCardName(acc.name);
-    setEditCardLimit(acc.limit_cents ? String(acc.limit_cents / 100) : "");
-    setEditCardClosing(String(acc.closing_date || 5));
-    setEditCardDue(String(acc.due_date || 10));
+    setEditCardLimit(acc.limit_cents?.toString() || "");
+    setEditCardClosing(acc.closing_date?.toString() || "5");
+    setEditCardDue(acc.due_date?.toString() || "10");
   };
 
   const handleEditCardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCardId) return;
-    const limit_cents = parseInt(editCardLimit || "0", 10) * 100;
-    if (!editCardName || limit_cents <= 0) return;
+    if (!editCardName) return;
     onEditCard?.(editingCardId, {
       name: editCardName,
-      limit_cents,
-      closing_date: parseInt(editCardClosing, 10),
-      due_date: parseInt(editCardDue, 10),
+      limit_cents: Number(editCardLimit) || 0,
+      due_date: Number(editCardDue),
+      closing_date: Number(editCardClosing),
     });
     setEditingCardId(null);
   };
@@ -1503,13 +1518,11 @@ export default function Dashboard({
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: 1000"
-                      value={newAccountBalance}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9-]/g, "");
-                        setNewAccountBalance(raw);
-                      }}
-                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                      inputMode="numeric"
+                      placeholder="R$ 0,00"
+                      value={getFormattedCurrency(newAccountBalance)}
+                      onChange={(e) => handleCurrencyInputChange(e, setNewAccountBalance)}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold text-center tracking-wider"
                     />
                   </div>
                 </div>
@@ -1590,12 +1603,10 @@ export default function Dashboard({
                     {editingAccountId === acc.id ? (
                       <input
                         type="text"
-                        value={editAccountBalance}
-                        onChange={(e) => {
-                          const raw = e.target.value.replace(/[^0-9-]/g, "");
-                          setEditAccountBalance(raw);
-                        }}
-                        className="bg-zinc-900 border border-zinc-700 text-white text-lg font-black rounded px-2 py-1 outline-none w-full mt-1.5"
+                        inputMode="numeric"
+                        value={getFormattedCurrency(editAccountBalance)}
+                        onChange={(e) => handleCurrencyInputChange(e, setEditAccountBalance)}
+                        className="bg-zinc-900 border border-zinc-700 text-white text-lg font-black rounded px-2 py-1 outline-none w-full mt-1.5 text-center tracking-wider"
                       />
                     ) : (
                       <span className="text-2xl font-black block mt-1.5 text-gradient-apple">
@@ -1678,13 +1689,11 @@ export default function Dashboard({
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: 5000"
-                      value={newCardLimit}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/\D/g, "");
-                        setNewCardLimit(raw);
-                      }}
-                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                      inputMode="numeric"
+                      placeholder="R$ 0,00"
+                      value={getFormattedCurrency(newCardLimit)}
+                      onChange={(e) => handleCurrencyInputChange(e, setNewCardLimit)}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold text-center tracking-wider"
                       required
                     />
                   </div>
@@ -1847,12 +1856,10 @@ export default function Dashboard({
                               <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 block mb-1">Limite (R$)</label>
                               <input
                                 type="text"
-                                value={editCardLimit}
-                                onChange={(e) => {
-                                  const raw = e.target.value.replace(/\D/g, "");
-                                  setEditCardLimit(raw);
-                                }}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold"
+                                inputMode="numeric"
+                                value={getFormattedCurrency(editCardLimit)}
+                                onChange={(e) => handleCurrencyInputChange(e, setEditCardLimit)}
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold text-center tracking-wider"
                                 required
                               />
                             </div>
