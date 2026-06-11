@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradiente de Fundo do Ícone -->
+    <radialGradient id="bg-grad" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#09090b" />
+      <stop offset="100%" stop-color="#000000" />
+    </radialGradient>
+    
+    <!-- Gradiente para o Símbolo de Destaque -->
+    <linearGradient id="glowing-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    
+    <!-- Sombra e Glow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Fundo -->
+  <rect width="512" height="512" rx="128" fill="url(#bg-grad)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.1" />
+
+  <!-- Símbolos abstratos de finanças: Duas setas dinâmicas indicando fluxo e crescimento -->
+  <g transform="translate(100, 100)" filter="url(#glow)">
+    <!-- Linha de Fluxo Crescente -->
+    <path d="M 40,240 L 120,160 L 190,210 L 280,100" 
+          fill="none" 
+          stroke="url(#glowing-accent)" 
+          stroke-width="28" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+          
+    <!-- Seta superior indicando alta -->
+    <path d="M 220,100 L 280,100 L 280,160" 
+          fill="none" 
+          stroke="url(#glowing-accent)" 
+          stroke-width="28" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- Círculos decorativos minimalistas -->
+    <circle cx="40" cy="240" r="14" fill="#60a5fa" />
+    <circle cx="120" cy="160" r="14" fill="#60a5fa" />
+    <circle cx="190" cy="210" r="14" fill="#60a5fa" />
+    <circle cx="280" cy="100" r="14" fill="#ffffff" />
+  </g>
+</svg>

@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  /* Fundo e Texto Principal */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #09090b;
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #52525b;
+
+  /* Cores de Ação (Brand & Accent Colors) */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-dim: rgba(59, 130, 246, 0.1);
+  --color-accent-border: rgba(59, 130, 246, 0.3);
+
+  /* Elementos de Interface (Glassmorphism) */
+  --color-card-bg: rgba(28, 28, 30, 0.8);
+  --color-card-border: rgba(255, 255, 255, 0.1);
+  --color-border-dashed: rgba(255, 255, 255, 0.05);
+
+  /* Estados de Alerta / Destrutivos */
+  --color-destructive: #ef4444;
+  --color-destructive-dim: rgba(239, 68, 68, 0.1);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Prevenção de Rolagem do Navegador PWA */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+  overscroll-behavior-y: contain; /* Bloqueia recarregamento por arrasto */
+  min-height: 100dvh;
+  min-height: 100dvh;
+  
+  /* Ajuste de margens internas para áreas seguras do dispositivo */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Utilities adicionais para animações e glassmorphism */
+.glass {
+  background: var(--color-card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-card-border);
+}
