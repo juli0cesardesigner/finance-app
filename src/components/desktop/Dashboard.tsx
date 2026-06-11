@@ -2071,38 +2071,44 @@ export default function Dashboard({
                           <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${isCatTypeDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         {isCatTypeDropdownOpen && (
-                          <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                            <div className="divide-y divide-zinc-900/60">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCategoryType("expense");
-                                  setIsCatTypeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
-                                  categoryType === "expense" ? "text-accent bg-accent/5" : "text-zinc-400"
-                                }`}
-                              >
-                                Saída (Despesa)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCategoryType("income");
-                                  setIsCatTypeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
-                                  categoryType === "income" ? "text-accent bg-accent/5" : "text-zinc-400"
-                                }`}
-                              >
-                                Entrada (Receita)
-                              </button>
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setIsCatTypeDropdownOpen(false)} />
+                            <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
+                              <div className="divide-y divide-zinc-900/60 relative z-30">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCategoryType("expense");
+                                    setIsCatTypeDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
+                                    categoryType === "expense" ? "text-accent bg-accent/5" : "text-zinc-400"
+                                  }`}
+                                >
+                                  Saída (Despesa)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCategoryType("income");
+                                    setIsCatTypeDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
+                                    categoryType === "income" ? "text-accent bg-accent/5" : "text-zinc-400"
+                                  }`}
+                                >
+                                  Entrada (Receita)
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
                     <div className="relative">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                        Ícone
+                      </label>sName="relative">
                       <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
                         Ãcone
                       </label>
@@ -2133,33 +2139,36 @@ export default function Dashboard({
                           <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ${isCatIconDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         {isCatIconDropdownOpen && (
-                          <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl max-h-48 overflow-y-auto">
-                            <div className="divide-y divide-zinc-900/60">
-                              {[
-                                { val: "Tag", label: "Etiqueta (Geral)" },
-                                { val: "Utensils", label: "Alimentação" },
-                                { val: "Home", label: "Moradia" },
-                                { val: "Car", label: "Transporte" },
-                                { val: "Heart", label: "Saúde / Lazer" },
-                                { val: "DollarSign", label: "Dinheiro / Salário" },
-                                { val: "TrendingUp", label: "Investimentos" },
-                              ].map((opt) => (
-                                <button
-                                  key={opt.val}
-                                  type="button"
-                                  onClick={() => {
-                                    setCategoryIcon(opt.val);
-                                    setIsCatIconDropdownOpen(false);
-                                  }}
-                                  className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
-                                    categoryIcon === opt.val ? "text-accent bg-accent/5" : "text-zinc-400"
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setIsCatIconDropdownOpen(false)} />
+                            <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl max-h-48 overflow-y-auto">
+                              <div className="divide-y divide-zinc-900/60 relative z-30">
+                                {[
+                                  { val: "Tag", label: "Etiqueta (Geral)" },
+                                  { val: "Utensils", label: "Alimentação" },
+                                  { val: "Home", label: "Moradia" },
+                                  { val: "Car", label: "Transporte" },
+                                  { val: "Heart", label: "Saúde / Lazer" },
+                                  { val: "DollarSign", label: "Dinheiro / Salário" },
+                                  { val: "TrendingUp", label: "Investimentos" },
+                                ].map((opt) => (
+                                  <button
+                                    key={opt.val}
+                                    type="button"
+                                    onClick={() => {
+                                      setCategoryIcon(opt.val);
+                                      setIsCatIconDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
+                                      categoryIcon === opt.val ? "text-accent bg-accent/5" : "text-zinc-400"
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
@@ -2350,34 +2359,37 @@ export default function Dashboard({
                           <ChevronDown className={`w-3.5 h-3.5 text-zinc-550 transition-transform duration-200 ${isEntityTypeDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
                         {isEntityTypeDropdownOpen && (
-                          <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                            <div className="divide-y divide-zinc-900/60">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setNewEntityType("personal");
-                                  setIsEntityTypeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
-                                  newEntityType === "personal" ? "text-accent bg-accent/5" : "text-zinc-400"
-                                }`}
-                              >
-                                Pessoal (Persona)
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setNewEntityType("business");
-                                  setIsEntityTypeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
-                                  newEntityType === "business" ? "text-accent bg-accent/5" : "text-zinc-400"
-                                }`}
-                              >
-                                Jurídico (Empresa)
-                              </button>
+                          <>
+                            <div className="fixed inset-0 z-20" onClick={() => setIsEntityTypeDropdownOpen(false)} />
+                            <div className="absolute z-30 left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
+                              <div className="divide-y divide-zinc-900/60 relative z-30">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewEntityType("personal");
+                                    setIsEntityTypeDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
+                                    newEntityType === "personal" ? "text-accent bg-accent/5" : "text-zinc-400"
+                                  }`}
+                                >
+                                  Pessoal (Persona)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewEntityType("business");
+                                    setIsEntityTypeDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left py-2 px-3.5 text-xs font-semibold hover:bg-zinc-900 transition-all cursor-pointer ${
+                                    newEntityType === "business" ? "text-accent bg-accent/5" : "text-zinc-400"
+                                  }`}
+                                >
+                                  Jurídico (Empresa)
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>

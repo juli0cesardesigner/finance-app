@@ -582,8 +582,10 @@ export default function QuickInsertModal({
                   </button>
 
                   {isDropdownOpen && (
-                    <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                      <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
+                      <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                        <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
                         {filteredCategories.map((cat) => {
                           const isSelected = selectedCategory === cat.id;
                           return (
@@ -661,6 +663,7 @@ export default function QuickInsertModal({
                         )}
                       </div>
                     </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -689,8 +692,10 @@ export default function QuickInsertModal({
                     </button>
 
                     {isAccountDropdownOpen && (
-                      <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                        <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsAccountDropdownOpen(false)} />
+                        <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                          <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
                           {accounts.map((acc) => {
                             const isSelected = selectedAccountId === acc.id;
                             const owner = entities.find((e) => e.id === acc.entity_id)?.name;
@@ -746,8 +751,10 @@ export default function QuickInsertModal({
                     </button>
 
                     {isEntityDropdownOpen && (
-                      <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                        <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsEntityDropdownOpen(false)} />
+                        <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                          <div className="max-h-52 overflow-y-auto divide-y divide-zinc-900/30">
                           {entities.map((ent) => {
                             const isSelected = selectedEntityId === ent.id;
                             return (
@@ -809,8 +816,10 @@ export default function QuickInsertModal({
                       </button>
 
                       {isRecurrenceTypeDropdownOpen && (
-                        <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                          <div className="divide-y divide-zinc-900/30 p-0.5">
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setIsRecurrenceTypeDropdownOpen(false)} />
+                          <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                            <div className="divide-y divide-zinc-900/30 p-0.5">
                             {([
                               { type: "single", label: "Único / Avulso" },
                               { type: "fixed", label: "Fixo (Recorrente)" },
@@ -842,6 +851,7 @@ export default function QuickInsertModal({
                             })}
                           </div>
                         </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -873,8 +883,10 @@ export default function QuickInsertModal({
                         </button>
 
                         {isIntervalDropdownOpen && (
-                          <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                            <div className="divide-y divide-zinc-900/30 p-0.5">
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setIsIntervalDropdownOpen(false)} />
+                            <div className="absolute z-20 left-0 right-0 mt-2 bg-[#09090b]/95 border border-zinc-800 rounded-2xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] backdrop-blur-3xl p-1 animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                              <div className="divide-y divide-zinc-900/30 p-0.5">
                               {([
                                 { type: "weekly", label: "Semanal" },
                                 { type: "monthly", label: "Mensal" },
