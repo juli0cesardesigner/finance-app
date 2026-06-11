@@ -502,8 +502,13 @@ export default function Dashboard({
 
   // Filtrar transações para a aba de Lançamentos
   const filteredTransactions = transactions.filter((t) => {
+    if (!t.date) return false;
     const cat = categories.find((c) => c.id === t.category_id);
-    const matchesMonth = t.date && t.date.startsWith(selectedMonth);
+    
+    const isThisMonth = t.date.startsWith(selectedMonth);
+    const isPastUnpaid = !t.cleared && t.date < selectedMonth;
+    const matchesMonth = isThisMonth || isPastUnpaid;
+
     const matchesSearch = t.description
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
