@@ -2108,9 +2108,6 @@ export default function Dashboard({
                     <div className="relative">
                       <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
                         Ícone
-                      </label>sName="relative">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
-                        Ãcone
                       </label>
                       <div className="relative">
                         <button
