@@ -157,8 +157,29 @@ export default function Home() {
 
   // Estados locais da aplicação
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [accounts, setAccounts] = useState<any[]>(DEFAULT_ACCOUNTS);
-  const [budgets, setBudgets] = useState<any[]>(DEFAULT_BUDGETS);
+  const [accounts, setAccounts] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("findom-accounts");
+      if (stored) return JSON.parse(stored);
+    }
+    return DEFAULT_ACCOUNTS;
+  });
+
+  const [budgets, setBudgets] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("findom-budgets");
+      if (stored) return JSON.parse(stored);
+    }
+    return DEFAULT_BUDGETS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("findom-accounts", JSON.stringify(accounts));
+  }, [accounts]);
+
+  useEffect(() => {
+    localStorage.setItem("findom-budgets", JSON.stringify(budgets));
+  }, [budgets]);
   const [familyName, setFamilyName] = useState("Financeiro Compartilhado");
   const [selectedEntityId, setSelectedEntityId] = useState<string>("all");
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
@@ -289,13 +310,7 @@ export default function Home() {
 
       // 2. Carregar transações locais
       const cachedTxs = await db.getCachedTransactions();
-      if (cachedTxs.length === 0) {
-        // Primeira execução: Popular com mock e salvar em cache
-        await db.cacheTransactions(INITIAL_TRANSACTIONS);
-        setTransactions(INITIAL_TRANSACTIONS);
-      } else {
-        setTransactions(cachedTxs);
-      }
+      setTransactions(cachedTxs);
     } catch (e) {
       console.error("Erro na inicialização local:", e);
     }
@@ -756,11 +771,15 @@ export default function Home() {
       setSelectedEntityId("all");
     }
     if (target === "all") {
-      setAccounts(DEFAULT_ACCOUNTS);
-      setBudgets(DEFAULT_BUDGETS);
+      setAccounts([]);
+      setBudgets([]);
       try {
         await db.clearAllCaches();
-        localStorage.clear(); // Oblitera tudo no domínio
+        // Seta arrays vazios para impedir que o React recarregue os DEFAULT_*
+        localStorage.setItem("findom-entities", JSON.stringify([]));
+        localStorage.setItem("findom-categories", JSON.stringify([]));
+        localStorage.setItem("findom-accounts", JSON.stringify([]));
+        localStorage.setItem("findom-budgets", JSON.stringify([]));
         
         // Tentativa agressiva de deletar o IndexedDB do localforage
         const req = indexedDB.deleteDatabase("findom-db");
