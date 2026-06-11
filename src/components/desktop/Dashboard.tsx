@@ -74,6 +74,7 @@ interface Transaction {
   installment_number?: number;
   interval?: "weekly" | "monthly" | "yearly";
   parent_transaction_id?: string;
+  notes?: string;
 }
 
 interface Member {
@@ -541,7 +542,7 @@ export default function Dashboard({
 
   return (
     <div className="flex-1 flex flex-row h-full bg-black overflow-hidden min-h-0">
-      <aside className="w-16 md:w-56 shrink-0 flex flex-col py-8 px-3.5 relative overflow-hidden my-4 ml-4 mr-2 rounded-[24px]"
+      <aside className="w-16 md:w-56 shrink-0 flex flex-col py-8 px-3.5 relative overflow-visible z-20 my-4 ml-4 mr-2 rounded-[24px]"
         style={{
           background: "rgba(255, 255, 255, 0.01)",
           backdropFilter: "blur(60px) saturate(220%)",
@@ -1142,21 +1143,23 @@ export default function Dashboard({
                                   </div>
                                 </td>
                                 <td className="py-4 px-6">
-                                  {t.entity_id ? (
-                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
-                                      t.entity_id === "ent-1"
-                                        ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
-                                        : t.entity_id === "ent-2"
-                                        ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
-                                        : t.entity_id === "ent-3"
-                                        ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
-                                        : "bg-zinc-850 text-zinc-400 border-zinc-700"
-                                    }`}>
-                                      {entities.find((e) => e.id === t.entity_id)?.name || "Outro"}
-                                    </span>
-                                  ) : (
-                                    <span className="text-zinc-550 font-medium">-</span>
-                                  )}
+                                  {(() => {
+                                    const entity = entities.find((e) => e.id === t.entity_id);
+                                    if (!entity) return <span className="text-zinc-550 font-medium">-</span>;
+                                    return (
+                                      <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
+                                        t.entity_id === "ent-1"
+                                          ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
+                                          : t.entity_id === "ent-2"
+                                          ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
+                                          : t.entity_id === "ent-3"
+                                          ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
+                                          : "bg-zinc-850 text-zinc-400 border-zinc-700"
+                                      }`}>
+                                        {entity.name}
+                                      </span>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="py-4 px-6">
                                   <span
@@ -1269,21 +1272,23 @@ export default function Dashboard({
                                         </div>
                                       </td>
                                       <td className="py-3 px-6">
-                                        {group.card.entity_id ? (
-                                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
-                                            group.card.entity_id === "ent-1"
-                                              ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
-                                              : group.card.entity_id === "ent-2"
-                                              ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
-                                              : group.card.entity_id === "ent-3"
-                                              ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
-                                              : "bg-zinc-850 text-zinc-400 border-zinc-700"
-                                          }`}>
-                                            {entities.find((e) => e.id === group.card.entity_id)?.name || "Outro"}
-                                          </span>
-                                        ) : (
-                                          <span className="text-zinc-550 font-medium">-</span>
-                                        )}
+                                        {(() => {
+                                          const entity = entities.find((e) => e.id === group.card.entity_id);
+                                          if (!entity) return <span className="text-zinc-550 font-medium">-</span>;
+                                          return (
+                                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
+                                              group.card.entity_id === "ent-1"
+                                                ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
+                                                : group.card.entity_id === "ent-2"
+                                                ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
+                                                : group.card.entity_id === "ent-3"
+                                                ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
+                                                : "bg-zinc-850 text-zinc-400 border-zinc-700"
+                                            }`}>
+                                              {entity.name}
+                                            </span>
+                                          );
+                                        })()}
                                       </td>
                                       <td className="py-3 px-6">
                                         <span className="px-2.5 py-0.5 border border-white/5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/[0.02] text-zinc-400">
@@ -1350,21 +1355,23 @@ export default function Dashboard({
                                             </div>
                                           </td>
                                           <td className="py-4 px-6">
-                                            {t.entity_id ? (
-                                              <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
-                                                t.entity_id === "ent-1"
-                                                  ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
-                                                  : t.entity_id === "ent-2"
-                                                  ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
-                                                  : t.entity_id === "ent-3"
-                                                  ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
-                                                  : "bg-zinc-850 text-zinc-400 border-zinc-700"
-                                              }`}>
-                                                {entities.find((e) => e.id === t.entity_id)?.name || "Outro"}
-                                              </span>
-                                            ) : (
-                                              <span className="text-zinc-550 font-medium">-</span>
-                                            )}
+                                            {(() => {
+                                              const entity = entities.find((e) => e.id === t.entity_id);
+                                              if (!entity) return <span className="text-zinc-550 font-medium">-</span>;
+                                              return (
+                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 border rounded-full bg-zinc-950/40 ${
+                                                  t.entity_id === "ent-1"
+                                                    ? "bg-purple-600/10 text-purple-400 border-purple-500/20"
+                                                    : t.entity_id === "ent-2"
+                                                    ? "bg-rose-600/10 text-rose-400 border-rose-500/20"
+                                                    : t.entity_id === "ent-3"
+                                                    ? "bg-amber-600/10 text-amber-400 border-amber-500/20"
+                                                    : "bg-zinc-850 text-zinc-400 border-zinc-700"
+                                                }`}>
+                                                  {entity.name}
+                                                </span>
+                                              );
+                                            })()}
                                           </td>
                                           <td className="py-4 px-6">
                                             <span

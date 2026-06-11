@@ -129,6 +129,7 @@ export default function QuickInsertModal({
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedEntityId, setSelectedEntityId] = useState<string>("ent-1");
   const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
   const [isCleared, setIsCleared] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
@@ -284,6 +285,7 @@ export default function QuickInsertModal({
       if (editingTransaction) {
         setInputValue(editingTransaction.amount_cents.toString());
         setDescription(editingTransaction.description || "");
+        setNotes(editingTransaction.notes || "");
         setIsCleared(editingTransaction.cleared ?? false);
         setRecurrenceType(editingTransaction.recurrence_type || "single");
         setInterval(editingTransaction.interval || "monthly");
@@ -297,6 +299,7 @@ export default function QuickInsertModal({
       } else {
         setInputValue("");
         setDescription("");
+        setNotes("");
         setIsCleared(false);
         const defaultAcc = accounts.find((a) => a.type === "bank") || accounts[0];
         setSelectedAccountId(defaultAcc?.id || "");
@@ -369,6 +372,7 @@ export default function QuickInsertModal({
       interval: recurrenceType !== "single" ? interval : undefined,
       cleared: isCleared,
       entity_id: selectedEntityId,
+      notes: notes.trim(),
     });
     onClose();
   };
@@ -411,11 +415,15 @@ export default function QuickInsertModal({
           >
             <div className="space-y-6">
               {/* Valor do Lançamento */}
-              <div className="text-center py-4">
-                <span className="text-[9px] font-black uppercase tracking-[0.22em] text-zinc-500">
+              <div className={`text-center py-6 px-4 rounded-3xl border relative overflow-hidden mb-2 ${
+                type === "income" 
+                  ? "bg-blue-950/10 border-blue-500/20 shadow-[inset_0_1px_0_rgba(59,130,246,0.1)]" 
+                  : "bg-red-950/10 border-red-500/20 shadow-[inset_0_1px_0_rgba(239,68,68,0.1)]"
+              }`}>
+                <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${type === "income" ? "text-blue-500/70" : "text-red-500/70"}`}>
                   {type === "income" ? "Valor da Entrada" : "Valor da Saída"}
                 </span>
-                <div className="flex items-center justify-center gap-4 mt-2.5 px-10 relative">
+                <div className="flex items-center justify-center gap-4 mt-3 px-6 relative z-10">
                   {/* Espaçador para balancear visualmente o botão da direita */}
                   <div className="w-10 h-10 shrink-0 hidden md:block" />
 
@@ -461,6 +469,19 @@ export default function QuickInsertModal({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className={`w-full bg-[#050507]/60 border border-zinc-900 focus:border-zinc-800 focus:bg-[#050507]/90 rounded-2xl py-3.5 px-4 text-xs text-zinc-200 outline-none transition-all placeholder:text-zinc-600 shadow-inner`}
+                />
+              </div>
+
+              {/* Detalhes / Subdivisões */}
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-[0.22em] text-zinc-550 block mb-2">
+                  Detalhes (Opcional)
+                </span>
+                <textarea
+                  placeholder="Itens, lista ou observações..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className={`w-full bg-[#050507]/60 border border-zinc-900 focus:border-zinc-800 focus:bg-[#050507]/90 rounded-2xl py-3.5 px-4 text-xs text-zinc-200 outline-none transition-all placeholder:text-zinc-600 shadow-inner min-h-[80px] resize-y`}
                 />
               </div>
 
