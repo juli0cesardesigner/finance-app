@@ -725,6 +725,7 @@ export default function QuickInsertModal({
                           })}
                         </div>
                       </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -782,6 +783,7 @@ export default function QuickInsertModal({
                           })}
                         </div>
                       </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -918,6 +920,7 @@ export default function QuickInsertModal({
                               })}
                             </div>
                           </div>
+                        </>
                         )}
                       </div>
                     </div>
