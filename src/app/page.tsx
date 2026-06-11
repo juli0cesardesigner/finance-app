@@ -335,116 +335,167 @@ export default function Home() {
   }) => {
     if (editingTransaction) {
       try {
-        // 1. Reverter impactos da transação antiga
         const oldTx = editingTransaction;
-        const wasExpense = categories.find((c) => c.id === oldTx.category_id)?.type === "expense";
-        const wasIncome = categories.find((c) => c.id === oldTx.category_id)?.type === "income";
+        const isSeriesEdit = oldTx.parent_transaction_id !== undefined;
+        const siblings = isSeriesEdit
+          ? transactions.filter((t) => t.parent_transaction_id === oldTx.parent_transaction_id)
+          : [oldTx];
 
-        // Reverter saldo da conta antiga
-        if (oldTx.cleared) {
-          const isOldCard = accounts.find((a) => a.id === oldTx.account_id)?.type === "credit_card";
-          let revertDiff = wasIncome ? -oldTx.amount_cents : oldTx.amount_cents;
-          if (isOldCard) {
-            revertDiff = wasIncome ? oldTx.amount_cents : -oldTx.amount_cents;
-          }
-          setAccounts((prev) =>
-            prev.map((acc) =>
-              acc.id === oldTx.account_id
-                ? { ...acc, balance_cents: acc.balance_cents + revertDiff }
-                : acc
-            )
-          );
-        }
-
-        // Reverter orçamento antigo
-        if (wasExpense) {
-          setBudgets((prev) =>
-            prev.map((b) =>
-              b.category_id === oldTx.category_id && b.entity_id === oldTx.entity_id
-                ? { ...b, spent_amount_cents: Math.max(0, b.spent_amount_cents - oldTx.amount_cents) }
-                : b
-            )
-          );
-        }
-
-        // 2. Aplicar impactos da nova transação
-        const isExpense = categories.find((c) => c.id === data.category_id)?.type === "expense";
-        const isIncome = categories.find((c) => c.id === data.category_id)?.type === "income";
-        const isCleared = data.cleared ?? false;
-        
-        let finalAmountCents = data.amount_cents;
-        if (data.recurrence_type === "installment") {
-          const totalInstallments = data.installments_total || 1;
-          finalAmountCents = Math.round(data.amount_cents / totalInstallments);
-          
-          // Se for a última parcela e houver arredondamento, idealmente ajustaríamos,
-          // mas como estamos editando uma parcela isolada, usamos a média arredondada.
-        }
-
-        if (isCleared) {
-          const isNewCard = accounts.find((a) => a.id === data.account_id)?.type === "credit_card";
-          let applyDiff = isIncome ? finalAmountCents : -finalAmountCents;
-          if (isNewCard) {
-            applyDiff = isIncome ? -finalAmountCents : finalAmountCents;
-          }
-          setAccounts((prev) =>
-            prev.map((acc) =>
-              acc.id === data.account_id
-                ? { ...acc, balance_cents: acc.balance_cents + applyDiff }
-                : acc
-            )
-          );
-        }
-
-        if (isExpense) {
-          setBudgets((prev) =>
-            prev.map((b) =>
-              b.category_id === data.category_id && b.entity_id === (data.entity_id || oldTx.entity_id)
-                ? { ...b, spent_amount_cents: b.spent_amount_cents + finalAmountCents }
-                : b
-            )
-          );
-        }
-
-        // 3. Atualizar a transação na lista
-        const updatedTxs = transactions.map((t) =>
-          t.id === oldTx.id
-            ? {
-                ...t,
-                amount_cents: finalAmountCents,
-                category_id: data.category_id,
-                account_id: data.account_id,
-                description: data.description,
-                cleared: isCleared,
-                recurrence_type: data.recurrence_type,
-                installments_total: data.installments_total,
-                interval: data.interval,
-                entity_id: data.entity_id !== undefined ? data.entity_id : t.entity_id,
+        // 1. Reverter impactos de todas as transações antigas (siblings)
+        setAccounts((prev) => {
+          let updated = [...prev];
+          for (const sib of siblings) {
+            if (sib.cleared) {
+              const wasIncome = categories.find((c) => c.id === sib.category_id)?.type === "income";
+              const isOldCard = updated.find((a) => a.id === sib.account_id)?.type === "credit_card";
+              let revertDiff = wasIncome ? -sib.amount_cents : sib.amount_cents;
+              if (isOldCard) {
+                revertDiff = wasIncome ? sib.amount_cents : -sib.amount_cents;
               }
-            : t
-        );
+              updated = updated.map((a) =>
+                a.id === sib.account_id ? { ...a, balance_cents: a.balance_cents + revertDiff } : a
+              );
+            }
+          }
+          return updated;
+        });
+
+        setBudgets((prev) => {
+          let updated = [...prev];
+          for (const sib of siblings) {
+            const wasExpense = categories.find((c) => c.id === sib.category_id)?.type === "expense";
+            if (wasExpense) {
+              updated = updated.map((b) =>
+                b.category_id === sib.category_id && b.entity_id === sib.entity_id
+                  ? { ...b, spent_amount_cents: Math.max(0, b.spent_amount_cents - sib.amount_cents) }
+                  : b
+              );
+            }
+          }
+          return updated;
+        });
+
+        // 2. Gerar a nova série de transações
+        const parentId = oldTx.parent_transaction_id || oldTx.id;
+        const txsToCreate: LocalTransaction[] = [];
+        const baseDesc = data.description.replace(/\s\(\d+\/\d+\)$/, ""); // Limpa sufixos
+        
+        if (data.recurrence_type === "single" || !data.recurrence_type) {
+          txsToCreate.push({
+            ...oldTx,
+            amount_cents: data.amount_cents,
+            category_id: data.category_id,
+            account_id: data.account_id,
+            description: baseDesc,
+            date: data.date,
+            cleared: data.cleared ?? false,
+            recurrence_type: "single",
+            installments_total: undefined,
+            installment_number: undefined,
+            interval: undefined,
+            parent_transaction_id: undefined,
+          });
+        } else if (data.recurrence_type === "fixed") {
+          for (let i = 0; i < 12; i++) {
+            const futureDateStr = addIntervalToDate(data.date, i, data.interval || "monthly");
+            const existingId = siblings[i]?.id || crypto.randomUUID();
+            txsToCreate.push({
+              ...oldTx,
+              id: existingId,
+              amount_cents: data.amount_cents,
+              category_id: data.category_id,
+              account_id: data.account_id,
+              description: baseDesc,
+              date: futureDateStr,
+              cleared: i === 0 ? (data.cleared ?? false) : (siblings[i]?.cleared ?? false),
+              recurrence_type: "fixed",
+              interval: data.interval,
+              parent_transaction_id: parentId,
+            });
+          }
+        } else if (data.recurrence_type === "installment") {
+          const totalInstallments = data.installments_total || 3;
+          const installmentAmount = Math.round(data.amount_cents / totalInstallments);
+
+          for (let i = 0; i < totalInstallments; i++) {
+            const futureDateStr = addIntervalToDate(data.date, i, data.interval || "monthly");
+            const existingId = siblings[i]?.id || crypto.randomUUID();
+            const isLast = i === totalInstallments - 1;
+            const currentAmount = isLast ? data.amount_cents - (installmentAmount * (totalInstallments - 1)) : installmentAmount;
+
+            txsToCreate.push({
+              ...oldTx,
+              id: existingId,
+              amount_cents: currentAmount,
+              category_id: data.category_id,
+              account_id: data.account_id,
+              description: `${baseDesc} (${i + 1}/${totalInstallments})`,
+              date: futureDateStr,
+              cleared: i === 0 ? (data.cleared ?? false) : (siblings[i]?.cleared ?? false),
+              recurrence_type: "installment",
+              installments_total: totalInstallments,
+              installment_number: i + 1,
+              interval: data.interval,
+              parent_transaction_id: parentId,
+            });
+          }
+        }
+
+        // 3. Aplicar impactos das novas transações
+        setAccounts((prev) => {
+          let updated = [...prev];
+          for (const tx of txsToCreate) {
+            if (tx.cleared) {
+              const isIncome = categories.find((c) => c.id === tx.category_id)?.type === "income";
+              const isNewCard = updated.find((a) => a.id === tx.account_id)?.type === "credit_card";
+              let applyDiff = isIncome ? tx.amount_cents : -tx.amount_cents;
+              if (isNewCard) {
+                applyDiff = isIncome ? -tx.amount_cents : tx.amount_cents;
+              }
+              updated = updated.map((a) =>
+                a.id === tx.account_id ? { ...a, balance_cents: a.balance_cents + applyDiff } : a
+              );
+            }
+          }
+          return updated;
+        });
+
+        setBudgets((prev) => {
+          let updated = [...prev];
+          for (const tx of txsToCreate) {
+            const isExpense = categories.find((c) => c.id === tx.category_id)?.type === "expense";
+            if (isExpense) {
+              updated = updated.map((b) =>
+                b.category_id === tx.category_id && b.entity_id === (data.entity_id || tx.entity_id)
+                  ? { ...b, spent_amount_cents: b.spent_amount_cents + tx.amount_cents }
+                  : b
+              );
+            }
+          }
+          return updated;
+        });
+
+        // 4. Atualizar a lista de transações
+        const siblingIds = new Set(siblings.map((s) => s.id));
+        const otherTxs = transactions.filter((t) => !siblingIds.has(t.id));
+        const updatedTxs = [...otherTxs, ...txsToCreate];
 
         setTransactions(updatedTxs);
         await db.cacheTransactions(updatedTxs);
 
-        // Salvar na fila offline para sync
-        const updatedTx = updatedTxs.find((t) => t.id === oldTx.id);
-        if (updatedTx) {
-          await db.saveOfflineTransaction({ ...updatedTx, offline_created: true });
+        for (const tx of txsToCreate) {
+          await db.saveOfflineTransaction({ ...tx, offline_created: true });
         }
 
         setEditingTransaction(null);
         await updatePendingCount();
 
-        // Se estiver online, disparar sync em background
         if (window.navigator.onLine) {
           const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            syncOfflineData();
-          }
+          if (session) syncOfflineData();
         }
       } catch (err) {
-        console.error("Erro ao editar transação:", err);
+        console.error("Erro ao editar série de transações:", err);
       }
       return;
     }
