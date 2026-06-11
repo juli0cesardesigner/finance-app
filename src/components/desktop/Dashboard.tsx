@@ -445,10 +445,13 @@ export default function Dashboard({
     });
   };
 
-  // Transações filtradas pelo mês selecionado
-  const monthlyTransactions = transactions.filter(
-    (t) => t.date && t.date.startsWith(selectedMonth)
-  );
+  // Transações filtradas pelo mês selecionado + parcelas atrasadas
+  const monthlyTransactions = transactions.filter((t) => {
+    if (!t.date) return false;
+    const isThisMonth = t.date.startsWith(selectedMonth);
+    const isPastUnpaid = !t.cleared && t.date < selectedMonth;
+    return isThisMonth || isPastUnpaid;
+  });
 
   // Lógica de métricas mensais
   const monthlyIncomeTransactions = monthlyTransactions.filter((t) => {

@@ -332,7 +332,8 @@ export default function QuickInsertModal({
         inputRef.current?.focus();
       }, 300);
     }
-  }, [isOpen, editingTransaction, type, categories, accounts, defaultEntityId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editingTransaction]);
 
   if (!isOpen) return null;
 
