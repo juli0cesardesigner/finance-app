@@ -168,7 +168,7 @@ export default function Dashboard({
     "totais" | "lancamentos" | "contas" | "cartoes" | "categorias" | "configuracoes" | "compras"
   >("totais");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [filterType, setFilterType] = useState<"all" | "income" | "expense" | "overdue">("all");
   const [hideValues, setHideValues] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -507,17 +507,22 @@ export default function Dashboard({
     
     const isThisMonth = t.date.startsWith(selectedMonth);
     const isPastUnpaid = !t.cleared && t.date < selectedMonth;
-    const matchesMonth = isThisMonth || isPastUnpaid;
 
     const matchesSearch = t.description
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    if (!matchesMonth) return false;
-    if (filterType === "all") return matchesSearch;
-    if (filterType === "income") return cat?.type === "income" && matchesSearch;
-    if (filterType === "expense") return cat?.type === "expense" && matchesSearch;
-    return matchesSearch;
+    if (!matchesSearch) return false;
+
+    if (filterType === "overdue") return isPastUnpaid;
+
+    // Default view hides past unpaid items to avoid clutter
+    if (!isThisMonth) return false;
+
+    if (filterType === "all") return true;
+    if (filterType === "income") return cat?.type === "income";
+    if (filterType === "expense") return cat?.type === "expense";
+    return false;
   });
 
   // Separar transações avulsas das de cartão
@@ -1039,20 +1044,26 @@ export default function Dashboard({
                 />
               </div>
 
-              <div className="flex bg-black/40 p-1 border border-white/5 rounded-full self-start sm:self-auto">
-                {(["all", "income", "expense"] as const).map((type) => {
+              <div className="flex bg-black/40 p-1 border border-white/5 rounded-full self-start sm:self-auto overflow-x-auto">
+                {(["all", "income", "expense", "overdue"] as const).map((type) => {
                   const isActive = filterType === type;
+                  const pastUnpaidCount = transactions.filter(t => !t.cleared && t.date && t.date < selectedMonth).length;
                   return (
                     <button
                       key={type}
                       onClick={() => setFilterType(type)}
-                      className={`px-4.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] transition-all cursor-pointer ${
+                      className={`px-4.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                         isActive
                           ? "bg-white/[0.08] border border-white/10 text-white shadow-md animate-fadeIn"
                           : "text-zinc-550 hover:text-zinc-350"
                       }`}
                     >
-                      {type === "all" ? "Todos" : type === "income" ? "Entradas" : "Saídas"}
+                      {type === "all" ? "Todos" : type === "income" ? "Entradas" : type === "expense" ? "Saídas" : "Pendências"}
+                      {type === "overdue" && pastUnpaidCount > 0 && (
+                        <span className="bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded-md text-[8px] border border-rose-500/30">
+                          {pastUnpaidCount}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -1096,8 +1107,16 @@ export default function Dashboard({
                           const sortedTxs = [...txs].sort(
                             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
                           );
-                          const pendingCents = txs
-                            .filter((t) => !t.cleared)
+                          
+                          // Opção 3: Calcular o total devido somando a fatura atual com os atrasados de faturas passadas
+                          const allCardTxs = transactions.filter(t => t.account_id === card.id);
+                          const pendingCents = allCardTxs
+                            .filter((t) => {
+                               if (!t.date) return false;
+                               const isThisMonth = t.date.startsWith(selectedMonth);
+                               const isPastUnpaid = !t.cleared && t.date < selectedMonth;
+                               return (isThisMonth && !t.cleared) || isPastUnpaid;
+                            })
                             .reduce((sum, t) => sum + t.amount_cents, 0);
 
                           return {
@@ -1106,7 +1125,7 @@ export default function Dashboard({
                             pendingCents,
                           };
                         })
-                        .filter((g) => g.transactions.length > 0);
+                        .filter((g) => g.transactions.length > 0 || g.pendingCents > 0);
 
                       const hasAnyRows = sortedRegularTxs.length > 0 || cardGroups.length > 0;
 
