@@ -430,9 +430,10 @@ export default function QuickInsertModal({
                     inputMode="numeric"
                     value={getFormattedValue()}
                     onChange={handleInputChange}
-                    className={`text-center text-6xl md:text-7xl font-black tracking-tighter bg-transparent border-none outline-none focus:outline-none focus:ring-0 flex-1 min-w-0 ${
+                    className={`text-center font-black tracking-tighter bg-transparent border-none outline-none focus:outline-none focus:ring-0 flex-1 min-w-0 ${
                       type === "income" ? "text-blue-400" : "text-red-400"
                     }`}
+                    style={{ fontSize: "clamp(3.5rem, 10vw, 5.5rem)", lineHeight: 1 }}
                     required
                   />
 
@@ -453,6 +454,13 @@ export default function QuickInsertModal({
                     )}
                   </button>
                 </div>
+                {recurrenceType === "installment" && installmentsTotal > 1 && (
+                  <div className="mt-2 text-center animate-in fade-in slide-in-from-top-1">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-zinc-500 bg-black/40 px-3 py-1 rounded-full border border-white/5 inline-block">
+                      {installmentsTotal}x de {(Math.round(parseInt(inputValue || "0", 10) / installmentsTotal) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Descrição do Lançamento */}

@@ -482,14 +482,21 @@ export default function Home() {
         });
       }
     } else if (data.recurrence_type === "installment") {
-      // Cria a quantidade exata de parcelas especificadas pelo usuário
+      // Cria a quantidade exata de parcelas especificadas pelo usuário dividindo o valor total
       const totalInstallments = data.installments_total || 3;
+      const installmentAmount = Math.round(data.amount_cents / totalInstallments);
+      
       for (let i = 0; i < totalInstallments; i++) {
         const futureDateStr = addIntervalToDate(data.date, i, data.interval || "monthly");
         const installmentNum = i + 1;
+        
+        // Ajusta a última parcela com qualquer diferença de arredondamento
+        const isLastInstallment = i === totalInstallments - 1;
+        const currentAmount = isLastInstallment ? data.amount_cents - (installmentAmount * (totalInstallments - 1)) : installmentAmount;
+
         txsToCreate.push({
           id: i === 0 ? parentId : crypto.randomUUID(),
-          amount_cents: data.amount_cents,
+          amount_cents: currentAmount,
           type: modalType,
           category_id: data.category_id,
           account_id: data.account_id,
