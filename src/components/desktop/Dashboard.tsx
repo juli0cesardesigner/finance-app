@@ -1144,8 +1144,8 @@ export default function Dashboard({
                                           </span>
                                         )}
                                         {t.recurrence_type === "installment" && (
-                                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
-                                            Parcela {t.installment_number || 1}/{t.installments_total || 1} ({t.interval === "weekly" ? "Semanal" : t.interval === "yearly" ? "Anual" : "Mensal"})
+                                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-white/5 text-zinc-500 border border-white/5 rounded-md">
+                                            Parcela {t.installment_number || 1}/{t.installments_total || 1}
                                           </span>
                                         )}
                                       </div>
@@ -1356,8 +1356,8 @@ export default function Dashboard({
                                                     </span>
                                                   )}
                                                   {t.recurrence_type === "installment" && (
-                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
-                                                      Parcela {t.installment_number || 1}/{t.installments_total || 1} ({t.interval === "weekly" ? "Semanal" : t.interval === "yearly" ? "Anual" : "Mensal"})
+                                                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-white/5 text-zinc-500 border border-white/5 rounded-md">
+                                                      Parcela {t.installment_number || 1}/{t.installments_total || 1}
                                                     </span>
                                                   )}
                                                 </div>
