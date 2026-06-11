@@ -104,6 +104,7 @@ interface QuickInsertModalProps {
     interval?: "weekly" | "monthly" | "yearly";
     cleared?: boolean;
     entity_id: string;
+    notes?: string;
   }) => void;
   onAddCategory?: (category: Omit<Category, "id">) => void;
   editingTransaction?: any;
