@@ -1991,59 +1991,36 @@ export default function Dashboard({
         {activeTab === "categorias" && (
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {budgets.map((b) => {
-                const cat = categories.find((c) => c.id === b.category_id);
-                const percent = Math.min(
-                  Math.round((b.spent_amount_cents / b.limit_amount_cents) * 100),
-                  100
-                );
-                const isOver = b.spent_amount_cents > b.limit_amount_cents;
+              {categories.map((cat) => {
+                const catTxs = monthlyTransactions.filter(t => t.category_id === cat.id);
+                if (catTxs.length === 0) return null;
+
+                const amount_cents = catTxs.reduce((sum, t) => sum + t.amount_cents, 0);
 
                 return (
-                  <div key={b.id} className="glass p-5 rounded-3xl space-y-4 border border-zinc-900/50">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: cat?.color }}
-                        />
-                        <h4 className="text-sm font-extrabold text-zinc-100">
-                          {cat?.name || "Sem categoria"}
-                        </h4>
-                      </div>
-                      <span className="text-xs font-black text-white">{percent}%</span>
-                    </div>
-
-                    {/* Barra de orçamentos */}
-                    <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isOver
-                            ? "bg-red-500"
-                            : percent > 80
-                            ? "bg-amber-500"
-                            : "bg-blue-500"
-                        }`}
-                        style={{ width: `${percent}%` }}
+                  <div key={cat.id} className="glass p-5 rounded-3xl space-y-3 border border-zinc-900/50">
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="w-3 h-3 rounded-full shadow-sm"
+                        style={{ backgroundColor: cat.color }}
                       />
+                      <h4 className="text-sm font-extrabold text-zinc-100 tracking-wide">
+                        {cat.name}
+                      </h4>
                     </div>
 
-                    <div className="flex justify-between text-[10px] font-bold text-zinc-500 pt-1 border-t border-zinc-900/40">
-                      <div className="flex flex-col">
-                        <span>Gasto</span>
-                        <span className="text-zinc-300 mt-0.5">{formatMoney(b.spent_amount_cents)}</span>
-                      </div>
-                      <div className="flex flex-col text-right">
-                        <span>Teto Orçamentário</span>
-                        <span className="text-zinc-350 mt-0.5">{formatMoney(b.limit_amount_cents)}</span>
-                      </div>
+                    <div className="flex flex-col text-[10px] font-black uppercase tracking-wider text-zinc-500 pt-3 border-t border-zinc-900/40">
+                      <span>{cat.type === "income" ? "Movimentação (Entrada)" : "Movimentação (Saída)"}</span>
+                      <span className={`${cat.type === "income" ? "text-emerald-400" : "text-rose-400"} text-lg mt-0.5 tracking-tight`}>
+                        {cat.type === "expense" ? "-" : ""}{formatMoney(amount_cents)}
+                      </span>
                     </div>
                   </div>
                 );
               })}
-              {budgets.length === 0 && (
-                <div className="col-span-2 glass p-8 rounded-3xl text-center text-zinc-550 italic text-xs">
-                  Nenhum limite orçamentário configurado para este mês.
+              {monthlyTransactions.length === 0 && (
+                <div className="col-span-1 md:col-span-2 glass p-8 rounded-3xl text-center text-zinc-550 italic text-xs">
+                  Nenhuma transação neste mês para categorizar.
                 </div>
               )}
             </div>
