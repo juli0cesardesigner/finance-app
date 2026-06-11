@@ -226,6 +226,11 @@ export default function Dashboard({
     }
   };
 
+  const handleDayInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
+    setter(raw);
+  };
+
   // Danger Zone state
   type ResetTarget = "transactions" | "cards" | "categories" | "entities" | "all";
   const [dangerSelection, setDangerSelection] = useState<Set<ResetTarget>>(new Set());
@@ -1702,12 +1707,13 @@ export default function Dashboard({
                       Dia de Fechamento da Fatura
                     </label>
                     <input
-                      type="number"
-                      min="1"
-                      max="31"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      placeholder="Ex: 5"
                       value={newCardClosing}
-                      onChange={(e) => setNewCardClosing(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                      onChange={(e) => handleDayInputChange(e, setNewCardClosing)}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold text-center"
                       required
                     />
                   </div>
@@ -1716,12 +1722,13 @@ export default function Dashboard({
                       Dia de Vencimento da Fatura
                     </label>
                     <input
-                      type="number"
-                      min="1"
-                      max="31"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      placeholder="Ex: 10"
                       value={newCardDue}
-                      onChange={(e) => setNewCardDue(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold"
+                      onChange={(e) => handleDayInputChange(e, setNewCardDue)}
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2.5 px-3.5 text-xs text-zinc-200 outline-none font-semibold text-center"
                       required
                     />
                   </div>
@@ -1866,20 +1873,24 @@ export default function Dashboard({
                             <div>
                               <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 block mb-1">Dia Fecham.</label>
                               <input
-                                type="number" min="1" max="31"
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={2}
                                 value={editCardClosing}
-                                onChange={(e) => setEditCardClosing(e.target.value)}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold"
+                                onChange={(e) => handleDayInputChange(e, setEditCardClosing)}
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold text-center"
                                 required
                               />
                             </div>
                             <div className="col-span-2">
                               <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 block mb-1">Dia Vencim.</label>
                               <input
-                                type="number" min="1" max="31"
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={2}
                                 value={editCardDue}
-                                onChange={(e) => setEditCardDue(e.target.value)}
-                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold"
+                                onChange={(e) => handleDayInputChange(e, setEditCardDue)}
+                                className="w-full bg-zinc-900 border border-zinc-800 focus:border-zinc-700 rounded-xl py-2 px-3 text-xs text-zinc-200 outline-none font-semibold text-center"
                                 required
                               />
                             </div>
