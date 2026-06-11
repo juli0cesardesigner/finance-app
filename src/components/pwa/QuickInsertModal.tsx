@@ -284,7 +284,13 @@ export default function QuickInsertModal({
   useEffect(() => {
     if (isOpen) {
       if (editingTransaction) {
-        setInputValue(editingTransaction.amount_cents.toString());
+        let initialAmount = editingTransaction.amount_cents;
+        if (editingTransaction.recurrence_type === "installment") {
+          const totalInst = editingTransaction.installments_total || 1;
+          initialAmount = initialAmount * totalInst;
+        }
+        
+        setInputValue(initialAmount.toString());
         setDescription(editingTransaction.description || "");
         setNotes(editingTransaction.notes || "");
         setIsCleared(editingTransaction.cleared ?? false);

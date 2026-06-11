@@ -371,12 +371,21 @@ export default function Home() {
         const isExpense = categories.find((c) => c.id === data.category_id)?.type === "expense";
         const isIncome = categories.find((c) => c.id === data.category_id)?.type === "income";
         const isCleared = data.cleared ?? false;
+        
+        let finalAmountCents = data.amount_cents;
+        if (data.recurrence_type === "installment") {
+          const totalInstallments = data.installments_total || 1;
+          finalAmountCents = Math.round(data.amount_cents / totalInstallments);
+          
+          // Se for a última parcela e houver arredondamento, idealmente ajustaríamos,
+          // mas como estamos editando uma parcela isolada, usamos a média arredondada.
+        }
 
         if (isCleared) {
           const isNewCard = accounts.find((a) => a.id === data.account_id)?.type === "credit_card";
-          let applyDiff = isIncome ? data.amount_cents : -data.amount_cents;
+          let applyDiff = isIncome ? finalAmountCents : -finalAmountCents;
           if (isNewCard) {
-            applyDiff = isIncome ? -data.amount_cents : data.amount_cents;
+            applyDiff = isIncome ? -finalAmountCents : finalAmountCents;
           }
           setAccounts((prev) =>
             prev.map((acc) =>
@@ -391,7 +400,7 @@ export default function Home() {
           setBudgets((prev) =>
             prev.map((b) =>
               b.category_id === data.category_id && b.entity_id === (data.entity_id || oldTx.entity_id)
-                ? { ...b, spent_amount_cents: b.spent_amount_cents + data.amount_cents }
+                ? { ...b, spent_amount_cents: b.spent_amount_cents + finalAmountCents }
                 : b
             )
           );
@@ -402,7 +411,7 @@ export default function Home() {
           t.id === oldTx.id
             ? {
                 ...t,
-                amount_cents: data.amount_cents,
+                amount_cents: finalAmountCents,
                 category_id: data.category_id,
                 account_id: data.account_id,
                 description: data.description,
