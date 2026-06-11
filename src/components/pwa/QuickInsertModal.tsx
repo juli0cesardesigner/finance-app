@@ -468,7 +468,6 @@ export default function QuickInsertModal({
               </div>
             </div>
           ) : (
-          {/* Form */}
           <form
             onSubmit={handleSubmit}
             className="flex-1 flex flex-col justify-between p-6 overflow-y-auto md:overflow-y-visible"
