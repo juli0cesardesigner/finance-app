@@ -980,7 +980,7 @@ export default function Home() {
         accounts={filteredAccounts}
         allAccounts={accounts}
         budgets={filteredBudgets}
-        members={DEFAULT_MEMBERS}
+        members={[]}
         onAddTransactionClick={openInsertModal}
         onRefresh={initializeLocalData}
         familyName={familyName}
