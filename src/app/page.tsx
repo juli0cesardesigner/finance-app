@@ -809,11 +809,11 @@ export default function Home() {
       setAccounts((prev) => prev.filter((acc) => acc.type !== "credit_card"));
     }
     if (target === "categories" || target === "all") {
-      setCategories(DEFAULT_CATEGORIES);
-      setBudgets(DEFAULT_BUDGETS);
+      setCategories([]);
+      setBudgets([]);
     }
     if (target === "entities" || target === "all") {
-      setEntities(DEFAULT_ENTITIES);
+      setEntities([]);
       setSelectedEntityId("all");
     }
     if (target === "all") {
