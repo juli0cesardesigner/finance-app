@@ -73,26 +73,42 @@ export function useSync() {
         }
       }
 
-      // Prepara os dados para o formato esperado pela tabela do banco de dados
-      const txsToInsert = pendingTxs.map((tx) => ({
-        id: tx.id,
-        family_id: userProfile.family_id,
-        user_id: userProfile.id,
-        account_id: tx.account_id,
-        category_id: tx.category_id,
-        amount_cents: tx.amount_cents,
-        description: tx.description,
-        date: tx.date,
-        cleared: tx.cleared,
-        entity_id: tx.entity_id,
-      }));
+      // Separa exclusões lógicas (amount_cents === 0) das inserções/atualizações
+      const txsToDelete = pendingTxs.filter(tx => tx.amount_cents === 0);
+      const txsToUpsertRaw = pendingTxs.filter(tx => tx.amount_cents > 0);
 
-      // Executa inserção em lote (upsert para evitar duplicidade de id)
-      const { error } = await supabase.from("transactions").upsert(txsToInsert);
-
-      if (error) {
-        throw error;
+      if (txsToDelete.length > 0) {
+        const idsToDelete = txsToDelete.map(tx => tx.id);
+        const { error: delError } = await supabase.from("transactions").delete().in("id", idsToDelete);
+        if (delError) {
+          console.error("PWA Sync: Erro ao deletar transações:", delError);
+          throw delError;
+        }
       }
+
+      if (txsToUpsertRaw.length > 0) {
+        // Prepara os dados para o formato esperado pela tabela do banco de dados
+        const txsToInsert = txsToUpsertRaw.map((tx) => ({
+          id: tx.id,
+          family_id: userProfile.family_id,
+          user_id: userProfile.id,
+          account_id: tx.account_id,
+          category_id: tx.category_id,
+          amount_cents: tx.amount_cents,
+          description: tx.description,
+          date: tx.date,
+          cleared: tx.cleared,
+          entity_id: tx.entity_id,
+        }));
+
+        // Executa inserção em lote (upsert para evitar duplicidade de id)
+        const { error } = await supabase.from("transactions").upsert(txsToInsert);
+
+        if (error) {
+          throw error;
+        }
+      }
+
 
       // Limpa os registros sincronizados do IndexedDB
       for (const tx of pendingTxs) {
