@@ -46,7 +46,39 @@ interface Account {
   entity_id?: string;
 }
 
-// Dados iniciais removidos conforme solicitação de reset total.
+// Dados estruturais padrão sem transações mockadas ou saldos falsos.
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: "cat-1", name: "Alimentação", type: "expense", color: "#ef4444", icon: "Utensils" },
+  { id: "cat-2", name: "Moradia", type: "expense", color: "#3b82f6", icon: "Home" },
+  { id: "cat-3", name: "Transporte", type: "expense", color: "#f59e0b", icon: "Car" },
+  { id: "cat-4", name: "Lazer & Saúde", type: "expense", color: "#10b981", icon: "Heart" },
+  { id: "cat-5", name: "Salário", type: "income", color: "#10b981", icon: "DollarSign" },
+  { id: "cat-6", name: "Investimentos", type: "income", color: "#8b5cf6", icon: "TrendingUp" },
+  { id: "cat-7", name: "Outros", type: "expense", color: "#6b7280", icon: "Tag" },
+];
+
+const DEFAULT_ENTITIES: Entity[] = [
+  { id: "ent-1", name: "Persona 1 (Julio)", type: "personal" },
+  { id: "ent-2", name: "Persona 2 (Hellen)", type: "personal" },
+  { id: "ent-3", name: "Empresa 1 (Duju Props)", type: "business" },
+  { id: "ent-4", name: "Empresa 2 (Outra)", type: "business" },
+];
+
+const DEFAULT_ACCOUNTS: Account[] = [
+  { id: "acc-1", name: "PIX Julio", type: "bank", balance_cents: 0, entity_id: "ent-1" },
+  { id: "acc-2", name: "Dinheiro Julio", type: "cash", balance_cents: 0, entity_id: "ent-1" },
+  { id: "acc-4", name: "PIX Hellen", type: "bank", balance_cents: 0, entity_id: "ent-2" },
+  { id: "acc-5", name: "Dinheiro Hellen", type: "cash", balance_cents: 0, entity_id: "ent-2" },
+  { id: "acc-6", name: "Cartão Nubank Hellen", type: "credit_card", balance_cents: 0, limit_cents: 200000, entity_id: "ent-2" },
+  { id: "acc-7", name: "Conta PJ Duju", type: "bank", balance_cents: 0, entity_id: "ent-3" },
+  { id: "acc-3", name: "Cartão PJ Duju", type: "credit_card", balance_cents: 0, limit_cents: 500000, entity_id: "ent-3" },
+];
+
+const DEFAULT_BUDGETS = [
+  { id: "b-1", category_id: "cat-1", limit_amount_cents: 100000, spent_amount_cents: 0, entity_id: "ent-1" },
+  { id: "b-2", category_id: "cat-3", limit_amount_cents: 40000, spent_amount_cents: 0, entity_id: "ent-1" },
+  { id: "b-3", category_id: "cat-4", limit_amount_cents: 30000, spent_amount_cents: 0, entity_id: "ent-2" },
+];
 
 // Helper to add weeks, months, or years to a local YYYY-MM-DD date string without timezones or month overflows
 const addIntervalToDate = (dateStr: string, index: number, interval: "weekly" | "monthly" | "yearly"): string => {
@@ -112,17 +144,31 @@ export default function Home() {
   const [accounts, setAccounts] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("findom-accounts");
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
-    return [];
+    return DEFAULT_ACCOUNTS;
   });
 
   const [budgets, setBudgets] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("findom-budgets");
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
-    return [];
+    return DEFAULT_BUDGETS;
   });
 
   useEffect(() => {
@@ -140,13 +186,14 @@ export default function Home() {
       const stored = localStorage.getItem("findom-entities");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch (e) {
           console.error(e);
         }
       }
     }
-    return [];
+    return DEFAULT_ENTITIES;
   });
 
   useEffect(() => {
@@ -185,13 +232,14 @@ export default function Home() {
       const stored = localStorage.getItem("findom-categories");
       if (stored) {
         try {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch (e) {
           console.error(e);
         }
       }
     }
-    return [];
+    return DEFAULT_CATEGORIES;
   });
 
   useEffect(() => {
@@ -809,23 +857,23 @@ export default function Home() {
       setAccounts((prev) => prev.filter((acc) => acc.type !== "credit_card"));
     }
     if (target === "categories" || target === "all") {
-      setCategories([]);
-      setBudgets([]);
+      setCategories(DEFAULT_CATEGORIES);
+      setBudgets(DEFAULT_BUDGETS);
     }
     if (target === "entities" || target === "all") {
-      setEntities([]);
+      setEntities(DEFAULT_ENTITIES);
       setSelectedEntityId("all");
     }
     if (target === "all") {
-      setAccounts([]);
-      setBudgets([]);
+      setAccounts(DEFAULT_ACCOUNTS);
+      setBudgets(DEFAULT_BUDGETS);
       try {
         await db.clearAllCaches();
-        // Seta arrays vazios para impedir que o React recarregue os DEFAULT_*
-        localStorage.setItem("findom-entities", JSON.stringify([]));
-        localStorage.setItem("findom-categories", JSON.stringify([]));
-        localStorage.setItem("findom-accounts", JSON.stringify([]));
-        localStorage.setItem("findom-budgets", JSON.stringify([]));
+        // Restaura as estruturas padrão limpas no localStorage
+        localStorage.setItem("findom-entities", JSON.stringify(DEFAULT_ENTITIES));
+        localStorage.setItem("findom-categories", JSON.stringify(DEFAULT_CATEGORIES));
+        localStorage.setItem("findom-accounts", JSON.stringify(DEFAULT_ACCOUNTS));
+        localStorage.setItem("findom-budgets", JSON.stringify(DEFAULT_BUDGETS));
         
         // Tentativa agressiva de deletar o IndexedDB do localforage
         const req = indexedDB.deleteDatabase("findom-db");
