@@ -6,6 +6,7 @@ import { db, LocalTransaction } from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 import QuickInsertModal from "@/components/pwa/QuickInsertModal";
 import Dashboard from "@/components/desktop/Dashboard";
+import LoginScreen from "@/components/pwa/LoginScreen";
 import {
   Wifi,
   WifiOff,
@@ -111,6 +112,7 @@ export default function Home() {
   const { isOnline, isSyncing, pendingCount, syncOfflineData, updatePendingCount, fetchSupabaseData, migrateLocalDataToSupabase } = useSync();
   const [isMobile, setIsMobile] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (toastMessage) {
@@ -575,42 +577,51 @@ export default function Home() {
         });
       }
 
-      // 2. Tentar autenticação anônima se estiver online
+      // 2. Verificar autenticação real (remover anônimo)
       if (window.navigator.onLine) {
         let { data: { session } } = await supabase.auth.getSession();
+        
         if (!session) {
-          const res = await supabase.auth.signInAnonymously();
-          session = res.data.session;
+          setIsAuthenticated(false);
+          return;
         }
 
-        if (session) {
-          // Disparar sincronização offline inicial
-          await syncOfflineData();
-          // Migrar dados locais para o Supabase se a nuvem estiver vazia
-          await migrateLocalDataToSupabase();
+        setIsAuthenticated(true);
 
-          // Puxar todos os dados remotos atualizados do Supabase
-          const cloudData = await fetchSupabaseData();
-          if (cloudData) {
-            if (cloudData.entities.length > 0) {
-              setEntities(cloudData.entities);
-              localStorage.setItem("findom-entities", JSON.stringify(cloudData.entities));
-            }
-            if (cloudData.accounts.length > 0) {
-              setAccounts(cloudData.accounts);
-              localStorage.setItem("findom-accounts", JSON.stringify(cloudData.accounts));
-            }
-            if (cloudData.categories.length > 0) {
-              setCategories(cloudData.categories);
-              localStorage.setItem("findom-categories", JSON.stringify(cloudData.categories));
-            }
-            if (cloudData.budgets.length > 0) {
-              setBudgets(cloudData.budgets);
-              localStorage.setItem("findom-budgets", JSON.stringify(cloudData.budgets));
-            }
-            setTransactions(cloudData.transactions);
-            await db.cacheTransactions(cloudData.transactions);
+        // Disparar sincronização offline inicial
+        await syncOfflineData();
+        // Migrar dados locais para o Supabase se a nuvem estiver vazia
+        await migrateLocalDataToSupabase();
+
+        // Puxar todos os dados remotos atualizados do Supabase
+        const cloudData = await fetchSupabaseData();
+        if (cloudData) {
+          if (cloudData.entities.length > 0) {
+            setEntities(cloudData.entities);
+            localStorage.setItem("findom-entities", JSON.stringify(cloudData.entities));
           }
+          if (cloudData.accounts.length > 0) {
+            setAccounts(cloudData.accounts);
+            localStorage.setItem("findom-accounts", JSON.stringify(cloudData.accounts));
+          }
+          if (cloudData.categories.length > 0) {
+            setCategories(cloudData.categories);
+            localStorage.setItem("findom-categories", JSON.stringify(cloudData.categories));
+          }
+          if (cloudData.budgets.length > 0) {
+            setBudgets(cloudData.budgets);
+            localStorage.setItem("findom-budgets", JSON.stringify(cloudData.budgets));
+          }
+          setTransactions(cloudData.transactions);
+          await db.cacheTransactions(cloudData.transactions);
+        }
+      } else {
+        // Se estiver offline, assume autenticado se houver dados locais, ou aguarda ficar online para login
+        const storedProfile = await db.getCachedProfile();
+        if (storedProfile && storedProfile.id !== "local-user-uuid") {
+           setIsAuthenticated(true);
+        } else {
+           setIsAuthenticated(false);
         }
       }
     } catch (e) {
@@ -1305,6 +1316,14 @@ export default function Home() {
       }
     }
   };
+
+  if (isAuthenticated === null) {
+    return <main className="flex-1 flex bg-black min-h-dvh items-center justify-center"><div className="w-8 h-8 border-4 border-zinc-800 border-t-white rounded-full animate-spin"></div></main>;
+  }
+
+  if (isAuthenticated === false) {
+    return <LoginScreen onLoginSuccess={initializeLocalData} />;
+  }
 
   if (isMobile) {
     if (isShoppingListOpen) {
