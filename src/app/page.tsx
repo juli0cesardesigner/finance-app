@@ -108,8 +108,21 @@ const addIntervalToDate = (dateStr: string, index: number, interval: "weekly" | 
 };
 
 export default function Home() {
-  const { isOnline, isSyncing, pendingCount, syncOfflineData, updatePendingCount } = useSync();
+  const { isOnline, isSyncing, pendingCount, syncOfflineData, updatePendingCount, fetchSupabaseData, migrateLocalDataToSupabase } = useSync();
   const [isMobile, setIsMobile] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  const getFamilyId = async () => {
+    const profile = await db.getCachedProfile();
+    return profile?.family_id || "d0000000-0000-0000-0000-000000000001";
+  };
 
   // Estados locais da aplicação
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -172,29 +185,65 @@ export default function Home() {
     localStorage.setItem("findom-entities", JSON.stringify(entities));
   }, [entities]);
 
-  const handleAddEntity = (name: string, type: "personal" | "business") => {
+  const handleAddEntity = async (name: string, type: "personal" | "business") => {
     const newEntity: Entity = {
-      id: `ent-${Date.now()}`,
+      id: crypto.randomUUID(),
       name,
       type,
     };
     setEntities((prev) => [...prev, newEntity]);
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("entities").upsert({
+          id: newEntity.id,
+          family_id: familyId,
+          name: newEntity.name,
+          type: newEntity.type,
+        });
+      } catch (e) {
+        console.error("Erro ao sincronizar entidade:", e);
+      }
+    }
   };
 
-  const handleEditEntity = (id: string, name: string, type: "personal" | "business") => {
+  const handleEditEntity = async (id: string, name: string, type: "personal" | "business") => {
     setEntities((prev) =>
       prev.map((ent) => (ent.id === id ? { ...ent, name, type } : ent))
     );
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("entities").upsert({
+          id,
+          family_id: familyId,
+          name,
+          type,
+        });
+      } catch (e) {
+        console.error("Erro ao editar entidade:", e);
+      }
+    }
   };
 
-  const handleDeleteEntity = (id: string) => {
+  const handleDeleteEntity = async (id: string) => {
     if (entities.length <= 1) {
-      alert("É necessário ter pelo menos uma entidade cadastrada!");
+      setToastMessage("É necessário ter pelo menos uma entidade cadastrada!");
       return;
     }
     setEntities((prev) => prev.filter((ent) => ent.id !== id));
     if (selectedEntityId === id) {
       setSelectedEntityId("all");
+    }
+
+    if (window.navigator.onLine) {
+      try {
+        await supabase.from("entities").delete().eq("id", id);
+      } catch (e) {
+        console.error("Erro ao excluir entidade:", e);
+      }
     }
   };
 
@@ -218,16 +267,17 @@ export default function Home() {
     localStorage.setItem("findom-categories", JSON.stringify(categories));
   }, [categories]);
 
-  const handleAddCategory = (categoryData: Omit<Category, "id">) => {
+  const handleAddCategory = async (categoryData: Omit<Category, "id">) => {
     const newCategory: Category = {
-      id: `cat-${Date.now()}`,
+      id: crypto.randomUUID(),
       ...categoryData,
     };
     setCategories((prev) => [...prev, newCategory]);
 
+    let newBudget: any = null;
     if (categoryData.type === "expense") {
-      const newBudget = {
-        id: `b-${Date.now()}`,
+      newBudget = {
+        id: crypto.randomUUID(),
         category_id: newCategory.id,
         limit_amount_cents: 100000,
         spent_amount_cents: 0,
@@ -235,21 +285,73 @@ export default function Home() {
       };
       setBudgets((prev) => [...prev, newBudget]);
     }
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("categories").upsert({
+          id: newCategory.id,
+          family_id: familyId,
+          name: newCategory.name,
+          type: newCategory.type,
+          color: newCategory.color,
+          icon: newCategory.icon,
+        });
+
+        if (newBudget) {
+          await supabase.from("budgets").upsert({
+            id: newBudget.id,
+            family_id: familyId,
+            category_id: newBudget.category_id,
+            entity_id: newBudget.entity_id === "ent-1" ? null : newBudget.entity_id,
+            limit_amount_cents: newBudget.limit_amount_cents,
+            month_year: new Date().toISOString().split("T")[0],
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao sincronizar categoria:", e);
+      }
+    }
   };
 
-  const handleEditCategory = (id: string, categoryData: Omit<Category, "id">) => {
+  const handleEditCategory = async (id: string, categoryData: Omit<Category, "id">) => {
     setCategories((prev) =>
       prev.map((cat) => (cat.id === id ? { ...cat, ...categoryData } : cat))
     );
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("categories").upsert({
+          id,
+          family_id: familyId,
+          name: categoryData.name,
+          type: categoryData.type,
+          color: categoryData.color,
+          icon: categoryData.icon,
+        });
+      } catch (e) {
+        console.error("Erro ao editar categoria:", e);
+      }
+    }
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (categories.length <= 1) {
-      alert("É necessário ter pelo menos uma categoria cadastrada!");
+      setToastMessage("É necessário ter pelo menos uma categoria cadastrada!");
       return;
     }
     setCategories((prev) => prev.filter((cat) => cat.id !== id));
     setBudgets((prev) => prev.filter((b) => b.category_id !== id));
+
+    if (window.navigator.onLine) {
+      try {
+        await supabase.from("budgets").delete().eq("category_id", id);
+        await supabase.from("categories").delete().eq("id", id);
+      } catch (e) {
+        console.error("Erro ao excluir categoria:", e);
+      }
+    }
   };
 
   // Estado do Modal PWA
@@ -269,7 +371,200 @@ export default function Home() {
   // Inicialização do cache e perfil local
   const initializeLocalData = useCallback(async () => {
     try {
-      // 1. Garantir que o perfil cacheado existe localmente (para a RLS local funcionar)
+      // Função auto-cicatrizante para normalizar IDs legados para UUIDv4
+      const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      let accountsChanged = false;
+      let categoriesChanged = false;
+      let budgetsChanged = false;
+      let transactionsChanged = false;
+      let entitiesChanged = false;
+
+      let localEntities: any[] = [];
+      try {
+        const stored = localStorage.getItem("findom-entities");
+        if (stored) localEntities = JSON.parse(stored) || [];
+      } catch (e) {}
+
+      let localCategories: any[] = [];
+      try {
+        const stored = localStorage.getItem("findom-categories");
+        if (stored) localCategories = JSON.parse(stored) || [];
+      } catch (e) {}
+
+      let localAccounts: any[] = [];
+      try {
+        const stored = localStorage.getItem("findom-accounts");
+        if (stored) localAccounts = JSON.parse(stored) || [];
+      } catch (e) {}
+
+      let localBudgets: any[] = [];
+      try {
+        const stored = localStorage.getItem("findom-budgets");
+        if (stored) localBudgets = JSON.parse(stored) || [];
+      } catch (e) {}
+
+      let localTransactions = await db.getCachedTransactions();
+
+      const entityIdMap: Record<string, string> = {};
+      const categoryIdMap: Record<string, string> = {};
+      const accountIdMap: Record<string, string> = {};
+      const budgetIdMap: Record<string, string> = {};
+
+      localEntities = localEntities.map((ent) => {
+        if (!isUuid(ent.id)) {
+          const newId = crypto.randomUUID();
+          entityIdMap[ent.id] = newId;
+          entitiesChanged = true;
+          return { ...ent, id: newId };
+        }
+        return ent;
+      });
+
+      localCategories = localCategories.map((cat) => {
+        if (!isUuid(cat.id)) {
+          const newId = crypto.randomUUID();
+          categoryIdMap[cat.id] = newId;
+          categoriesChanged = true;
+          return { ...cat, id: newId };
+        }
+        return cat;
+      });
+
+      localAccounts = localAccounts.map((acc) => {
+        let changed = false;
+        let newAcc = { ...acc };
+        if (!isUuid(acc.id)) {
+          const newId = crypto.randomUUID();
+          accountIdMap[acc.id] = newId;
+          newAcc.id = newId;
+          changed = true;
+          accountsChanged = true;
+        }
+        if (acc.entity_id && entityIdMap[acc.entity_id]) {
+          newAcc.entity_id = entityIdMap[acc.entity_id];
+          changed = true;
+          accountsChanged = true;
+        }
+        return newAcc;
+      });
+
+      localBudgets = localBudgets.map((b) => {
+        let changed = false;
+        let newB = { ...b };
+        if (!isUuid(b.id)) {
+          const newId = crypto.randomUUID();
+          budgetIdMap[b.id] = newId;
+          newB.id = newId;
+          changed = true;
+          budgetsChanged = true;
+        }
+        if (b.category_id && categoryIdMap[b.category_id]) {
+          newB.category_id = categoryIdMap[b.category_id];
+          changed = true;
+          budgetsChanged = true;
+        }
+        if (b.entity_id && entityIdMap[b.entity_id]) {
+          newB.entity_id = entityIdMap[b.entity_id];
+          changed = true;
+          budgetsChanged = true;
+        }
+        return newB;
+      });
+
+      localTransactions = localTransactions.map((tx) => {
+        let changed = false;
+        let newTx = { ...tx };
+        if (!isUuid(tx.id)) {
+          newTx.id = crypto.randomUUID();
+          changed = true;
+          transactionsChanged = true;
+        }
+        if (tx.account_id && accountIdMap[tx.account_id]) {
+          newTx.account_id = accountIdMap[tx.account_id];
+          changed = true;
+          transactionsChanged = true;
+        }
+        if (tx.category_id && categoryIdMap[tx.category_id]) {
+          newTx.category_id = categoryIdMap[tx.category_id];
+          changed = true;
+          transactionsChanged = true;
+        }
+        if (tx.entity_id && entityIdMap[tx.entity_id]) {
+          newTx.entity_id = entityIdMap[tx.entity_id];
+          changed = true;
+          transactionsChanged = true;
+        }
+        return newTx;
+      });
+
+      if (entitiesChanged) {
+        localStorage.setItem("findom-entities", JSON.stringify(localEntities));
+        setEntities(localEntities);
+      } else {
+        setEntities(localEntities);
+      }
+      if (categoriesChanged) {
+        localStorage.setItem("findom-categories", JSON.stringify(localCategories));
+        setCategories(localCategories);
+      } else {
+        setCategories(localCategories);
+      }
+      if (accountsChanged) {
+        localStorage.setItem("findom-accounts", JSON.stringify(localAccounts));
+        setAccounts(localAccounts);
+      } else {
+        setAccounts(localAccounts);
+      }
+      if (budgetsChanged) {
+        localStorage.setItem("findom-budgets", JSON.stringify(localBudgets));
+        setBudgets(localBudgets);
+      } else {
+        setBudgets(localBudgets);
+      }
+      if (transactionsChanged) {
+        await db.cacheTransactions(localTransactions);
+      }
+      setTransactions(localTransactions);
+
+      const offlineTxs = await db.getOfflineTransactions();
+      let offlineChanged = false;
+      const normalizedOfflineTxs = [];
+      for (const tx of offlineTxs) {
+        let changed = false;
+        let newTx = { ...tx };
+        if (!isUuid(tx.id)) {
+          newTx.id = crypto.randomUUID();
+          changed = true;
+          offlineChanged = true;
+        }
+        if (tx.account_id && accountIdMap[tx.account_id]) {
+          newTx.account_id = accountIdMap[tx.account_id];
+          changed = true;
+          offlineChanged = true;
+        }
+        if (tx.category_id && categoryIdMap[tx.category_id]) {
+          newTx.category_id = categoryIdMap[tx.category_id];
+          changed = true;
+          offlineChanged = true;
+        }
+        if (tx.entity_id && entityIdMap[tx.entity_id]) {
+          newTx.entity_id = entityIdMap[tx.entity_id];
+          changed = true;
+          offlineChanged = true;
+        }
+        normalizedOfflineTxs.push({ newTx, oldId: tx.id, changed });
+      }
+
+      if (offlineChanged) {
+        for (const item of normalizedOfflineTxs) {
+          if (item.changed) {
+            await db.removeOfflineTransaction(item.oldId);
+            await db.saveOfflineTransaction(item.newTx);
+          }
+        }
+      }
+
+      // 1. Garantir que o perfil cacheado existe localmente
       const cachedProfile = await db.getCachedProfile();
       if (!cachedProfile) {
         await db.cacheProfile({
@@ -280,13 +575,48 @@ export default function Home() {
         });
       }
 
-      // 2. Carregar transações locais
-      const cachedTxs = await db.getCachedTransactions();
-      setTransactions(cachedTxs);
+      // 2. Tentar autenticação anônima se estiver online
+      if (window.navigator.onLine) {
+        let { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          const res = await supabase.auth.signInAnonymously();
+          session = res.data.session;
+        }
+
+        if (session) {
+          // Disparar sincronização offline inicial
+          await syncOfflineData();
+          // Migrar dados locais para o Supabase se a nuvem estiver vazia
+          await migrateLocalDataToSupabase();
+
+          // Puxar todos os dados remotos atualizados do Supabase
+          const cloudData = await fetchSupabaseData();
+          if (cloudData) {
+            if (cloudData.entities.length > 0) {
+              setEntities(cloudData.entities);
+              localStorage.setItem("findom-entities", JSON.stringify(cloudData.entities));
+            }
+            if (cloudData.accounts.length > 0) {
+              setAccounts(cloudData.accounts);
+              localStorage.setItem("findom-accounts", JSON.stringify(cloudData.accounts));
+            }
+            if (cloudData.categories.length > 0) {
+              setCategories(cloudData.categories);
+              localStorage.setItem("findom-categories", JSON.stringify(cloudData.categories));
+            }
+            if (cloudData.budgets.length > 0) {
+              setBudgets(cloudData.budgets);
+              localStorage.setItem("findom-budgets", JSON.stringify(cloudData.budgets));
+            }
+            setTransactions(cloudData.transactions);
+            await db.cacheTransactions(cloudData.transactions);
+          }
+        }
+      }
     } catch (e) {
       console.error("Erro na inicialização local:", e);
     }
-  }, []);
+  }, [fetchSupabaseData, migrateLocalDataToSupabase, syncOfflineData]);
 
   useEffect(() => {
     initializeLocalData();
@@ -753,14 +1083,14 @@ export default function Home() {
     await updatePendingCount();
   };
 
-  const handleAddCard = (cardData: {
+  const handleAddCard = async (cardData: {
     name: string;
     limit_cents: number;
     due_date: number;
     closing_date: number;
   }) => {
     const newCard = {
-      id: `acc-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: cardData.name,
       type: "credit_card" as const,
       balance_cents: 0,
@@ -770,9 +1100,26 @@ export default function Home() {
       entity_id: selectedEntityId === "all" ? "ent-1" : selectedEntityId,
     };
     setAccounts((prev) => [...prev, newCard]);
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("accounts").upsert({
+          id: newCard.id,
+          family_id: familyId,
+          name: newCard.name,
+          type: newCard.type,
+          balance_cents: newCard.balance_cents,
+          limit_cents: newCard.limit_cents,
+          entity_id: newCard.entity_id === "ent-1" ? null : newCard.entity_id,
+        });
+      } catch (e) {
+        console.error("Erro ao sincronizar novo cartão:", e);
+      }
+    }
   };
 
-  const handleEditCard = (id: string, cardData: {
+  const handleEditCard = async (id: string, cardData: {
     name: string;
     limit_cents: number;
     due_date: number;
@@ -785,20 +1132,55 @@ export default function Home() {
           : acc
       )
     );
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        const existingAcc = accounts.find((a) => a.id === id);
+        await supabase.from("accounts").upsert({
+          id,
+          family_id: familyId,
+          name: cardData.name,
+          type: "credit_card",
+          balance_cents: existingAcc?.balance_cents || 0,
+          limit_cents: cardData.limit_cents,
+          entity_id: existingAcc?.entity_id === "ent-1" ? null : existingAcc?.entity_id,
+        });
+      } catch (e) {
+        console.error("Erro ao editar cartão:", e);
+      }
+    }
   };
 
-  const handleAddAccount = (accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
+  const handleAddAccount = async (accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
     const newAccount = {
-      id: `acc-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: accountData.name,
       type: accountData.type,
       balance_cents: accountData.balance_cents,
       entity_id: selectedEntityId === "all" ? "ent-1" : selectedEntityId,
     };
     setAccounts((prev) => [...prev, newAccount]);
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        await supabase.from("accounts").upsert({
+          id: newAccount.id,
+          family_id: familyId,
+          name: newAccount.name,
+          type: newAccount.type,
+          balance_cents: newAccount.balance_cents,
+          limit_cents: 0,
+          entity_id: newAccount.entity_id === "ent-1" ? null : newAccount.entity_id,
+        });
+      } catch (e) {
+        console.error("Erro ao sincronizar nova conta:", e);
+      }
+    }
   };
 
-  const handleEditAccount = (id: string, accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
+  const handleEditAccount = async (id: string, accountData: { name: string; type: "cash" | "bank"; balance_cents: number }) => {
     setAccounts((prev) =>
       prev.map((acc) =>
         acc.id === id
@@ -806,15 +1188,66 @@ export default function Home() {
           : acc
       )
     );
+
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        const existingAcc = accounts.find((a) => a.id === id);
+        await supabase.from("accounts").upsert({
+          id,
+          family_id: familyId,
+          name: accountData.name,
+          type: accountData.type,
+          balance_cents: accountData.balance_cents,
+          limit_cents: 0,
+          entity_id: existingAcc?.entity_id === "ent-1" ? null : existingAcc?.entity_id,
+        });
+      } catch (e) {
+        console.error("Erro ao editar conta:", e);
+      }
+    }
   };
 
-  const handleDeleteCard = (id: string) => {
+  const handleDeleteCard = async (id: string) => {
     setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+
+    if (window.navigator.onLine) {
+      try {
+        await supabase.from("accounts").delete().eq("id", id);
+      } catch (e) {
+        console.error("Erro ao excluir conta/cartão:", e);
+      }
+    }
   };
 
   const handleReset = async (target: "transactions" | "cards" | "categories" | "entities" | "all") => {
     console.log("Executando reset para:", target);
     
+    if (window.navigator.onLine) {
+      try {
+        const familyId = await getFamilyId();
+        if (target === "transactions" || target === "all") {
+          await supabase.from("transactions").delete().eq("family_id", familyId);
+        }
+        if (target === "cards" || target === "all") {
+          if (target === "cards") {
+            await supabase.from("accounts").delete().eq("family_id", familyId).eq("type", "credit_card");
+          } else {
+            await supabase.from("accounts").delete().eq("family_id", familyId);
+          }
+        }
+        if (target === "categories" || target === "all") {
+          await supabase.from("budgets").delete().eq("family_id", familyId);
+          await supabase.from("categories").delete().eq("family_id", familyId);
+        }
+        if (target === "entities" || target === "all") {
+          await supabase.from("entities").delete().eq("family_id", familyId);
+        }
+      } catch (e) {
+        console.error("Erro ao resetar dados no Supabase:", e);
+      }
+    }
+
     if (target === "transactions" || target === "all") {
       setTransactions([]);
       try {
@@ -968,6 +1401,17 @@ export default function Home() {
           editingTransaction={editingTransaction}
           defaultEntityId={selectedEntityId === "all" ? "ent-1" : selectedEntityId}
         />
+        {toastMessage && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 bg-zinc-950/80 border border-zinc-800 backdrop-blur-xl rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-fade-in">
+            <span className="text-sm font-medium text-white">{toastMessage}</span>
+            <button 
+              onClick={() => setToastMessage(null)}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
       </main>
     );
   }
@@ -1046,6 +1490,17 @@ export default function Home() {
         editingTransaction={editingTransaction}
         defaultEntityId={selectedEntityId === "all" ? "ent-1" : selectedEntityId}
       />
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 bg-zinc-950/80 border border-zinc-800 backdrop-blur-xl rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] animate-fade-in">
+          <span className="text-sm font-medium text-white">{toastMessage}</span>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </main>
   );
 }
