@@ -46,55 +46,7 @@ interface Account {
   entity_id?: string;
 }
 
-// Dados Padrão (Mock) para desenvolvimento local e fallback offline inicial
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: "cat-1", name: "Alimentação", type: "expense", color: "#ef4444", icon: "Utensils" },
-  { id: "cat-2", name: "Moradia", type: "expense", color: "#3b82f6", icon: "Home" },
-  { id: "cat-3", name: "Transporte", type: "expense", color: "#f59e0b", icon: "Car" },
-  { id: "cat-4", name: "Lazer & Saúde", type: "expense", color: "#10b981", icon: "Heart" },
-  { id: "cat-5", name: "Salário", type: "income", color: "#10b981", icon: "DollarSign" },
-  { id: "cat-6", name: "Investimentos", type: "income", color: "#8b5cf6", icon: "TrendingUp" },
-  { id: "cat-7", name: "Outros", type: "expense", color: "#6b7280", icon: "Tag" },
-];
-
-const DEFAULT_ENTITIES: Entity[] = [
-  { id: "ent-1", name: "Persona 1 (Julio)", type: "personal" },
-  { id: "ent-2", name: "Persona 2 (Hellen)", type: "personal" },
-  { id: "ent-3", name: "Empresa 1 (Duju Props)", type: "business" },
-  { id: "ent-4", name: "Empresa 2 (Outra)", type: "business" },
-];
-
-const DEFAULT_ACCOUNTS: Account[] = [
-  { id: "acc-1", name: "PIX Julio", type: "bank", balance_cents: 345000, entity_id: "ent-1" }, // R$ 3.450,00
-  { id: "acc-2", name: "Dinheiro Julio", type: "cash", balance_cents: 25000, entity_id: "ent-1" }, // R$ 250,00
-  { id: "acc-4", name: "PIX Hellen", type: "bank", balance_cents: 120000, entity_id: "ent-2" }, // R$ 1.200,00
-  { id: "acc-5", name: "Dinheiro Hellen", type: "cash", balance_cents: 15000, entity_id: "ent-2" }, // R$ 150,00
-  { id: "acc-6", name: "Cartão Nubank Hellen", type: "credit_card", balance_cents: 54000, limit_cents: 200000, entity_id: "ent-2" }, // R$ 540,00
-  { id: "acc-7", name: "Conta PJ Duju", type: "bank", balance_cents: 1520000, entity_id: "ent-3" }, // R$ 15.200,00
-  { id: "acc-3", name: "Cartão PJ Duju", type: "credit_card", balance_cents: 82000, limit_cents: 500000, entity_id: "ent-3" }, // R$ 820,00
-];
-
-const DEFAULT_MEMBERS = [
-  { id: "mem-1", full_name: "Você (Admin)", role: "admin" },
-  { id: "mem-2", full_name: "Cônjuge", role: "member" },
-];
-
-const DEFAULT_BUDGETS = [
-  { id: "b-1", category_id: "cat-1", limit_amount_cents: 100000, spent_amount_cents: 64200, entity_id: "ent-1" }, // Alimentação Julio
-  { id: "b-2", category_id: "cat-3", limit_amount_cents: 40000, spent_amount_cents: 18000, entity_id: "ent-1" }, // Transporte Julio
-  { id: "b-3", category_id: "cat-4", limit_amount_cents: 30000, spent_amount_cents: 9000, entity_id: "ent-2" }, // Lazer Hellen
-];
-
-const INITIAL_TRANSACTIONS = [
-  { id: "t-1", amount_cents: 64200, description: "Supermercado Semanal", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-1", account_id: "acc-1", entity_id: "ent-1" },
-  { id: "t-2", amount_cents: 345000, description: "Salário Recebido", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-5", account_id: "acc-1", entity_id: "ent-1" },
-  { id: "t-3", amount_cents: 18000, description: "Combustível Carro (PJ)", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-3", account_id: "acc-3", entity_id: "ent-3" },
-  { id: "t-4", amount_cents: 120000, description: "Serviço Prestado (PJ)", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-5", account_id: "acc-7", entity_id: "ent-3" },
-  { id: "t-5", amount_cents: 35000, description: "Jantar Hellen & Julio", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-1", account_id: "acc-6", entity_id: "ent-2" },
-  { id: "t-6", amount_cents: 120000, description: "Aluguel Apartamento", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-2", account_id: "acc-1", entity_id: "ent-1", recurrence_type: "fixed", interval: "monthly" },
-  { id: "t-7", amount_cents: 45000, description: "Compra Sofá (1/10)", date: new Date().toISOString().split("T")[0], cleared: true, category_id: "cat-2", account_id: "acc-6", entity_id: "ent-2", recurrence_type: "installment", installments_total: 10, installment_number: 1, interval: "monthly" },
-  { id: "t-8", amount_cents: 19000, description: "Gasolina Julio no Cartão Hellen", date: new Date().toISOString().split("T")[0], cleared: false, category_id: "cat-3", account_id: "acc-6", entity_id: "ent-1" },
-];
+// Mock data removida por solicitação do usuário. Estado começa vazio e sincroniza com o banco.
 
 // Helper to add weeks, months, or years to a local YYYY-MM-DD date string without timezones or month overflows
 const addIntervalToDate = (dateStr: string, index: number, interval: "weekly" | "monthly" | "yearly"): string => {
@@ -152,17 +104,18 @@ const addIntervalToDate = (dateStr: string, index: number, interval: "weekly" | 
 };
 
 export default function Home() {
-  const { isOnline, isSyncing, pendingCount, syncOfflineData, updatePendingCount } = useSync();
+  const { isOnline, isSyncing, pendingCount, syncOfflineData, updatePendingCount, fetchSupabaseData, migrateLocalDataToSupabase } = useSync();
   const [isMobile, setIsMobile] = useState(false);
 
   // Estados locais da aplicação
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("findom-accounts");
       if (stored) return JSON.parse(stored);
     }
-    return DEFAULT_ACCOUNTS;
+    return [];
   });
 
   const [budgets, setBudgets] = useState<any[]>(() => {
@@ -170,7 +123,7 @@ export default function Home() {
       const stored = localStorage.getItem("findom-budgets");
       if (stored) return JSON.parse(stored);
     }
-    return DEFAULT_BUDGETS;
+    return [];
   });
 
   useEffect(() => {
@@ -194,7 +147,7 @@ export default function Home() {
         }
       }
     }
-    return DEFAULT_ENTITIES;
+    return [];
   });
 
   useEffect(() => {
@@ -239,7 +192,7 @@ export default function Home() {
         }
       }
     }
-    return DEFAULT_CATEGORIES;
+    return [];
   });
 
   useEffect(() => {
@@ -308,13 +261,34 @@ export default function Home() {
         });
       }
 
-      // 2. Carregar transações locais
+      if (window.navigator.onLine) {
+        // Primeiro: verifica se precisamos salvar os dados do LocalStorage na nuvem
+        await migrateLocalDataToSupabase();
+
+        const remoteData = await fetchSupabaseData();
+        if (remoteData) {
+          setAccounts(remoteData.accounts);
+          setCategories(remoteData.categories);
+          setBudgets(remoteData.budgets);
+          setTransactions(remoteData.transactions);
+          setMembers(remoteData.members);
+          
+          // Atualizar o cache local
+          localStorage.setItem("findom-accounts", JSON.stringify(remoteData.accounts));
+          localStorage.setItem("findom-categories", JSON.stringify(remoteData.categories));
+          localStorage.setItem("findom-budgets", JSON.stringify(remoteData.budgets));
+          await db.cacheTransactions(remoteData.transactions);
+          return;
+        }
+      }
+
+      // 2. Carregar transações locais se offline ou falha no fetch
       const cachedTxs = await db.getCachedTransactions();
       setTransactions(cachedTxs);
     } catch (e) {
-      console.error("Erro na inicialização local:", e);
+      console.error("Erro na inicialização:", e);
     }
-  }, []);
+  }, [fetchSupabaseData, migrateLocalDataToSupabase]);
 
   useEffect(() => {
     initializeLocalData();
@@ -857,11 +831,11 @@ export default function Home() {
       setAccounts((prev) => prev.filter((acc) => acc.type !== "credit_card"));
     }
     if (target === "categories" || target === "all") {
-      setCategories(DEFAULT_CATEGORIES);
-      setBudgets(DEFAULT_BUDGETS);
+      setCategories([]);
+      setBudgets([]);
     }
     if (target === "entities" || target === "all") {
-      setEntities(DEFAULT_ENTITIES);
+      setEntities([]);
       setSelectedEntityId("all");
     }
     if (target === "all") {
@@ -1028,7 +1002,7 @@ export default function Home() {
         accounts={filteredAccounts}
         allAccounts={accounts}
         budgets={filteredBudgets}
-        members={DEFAULT_MEMBERS}
+        members={members}
         onAddTransactionClick={openInsertModal}
         onRefresh={initializeLocalData}
         familyName={familyName}
