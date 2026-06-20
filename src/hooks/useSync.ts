@@ -87,7 +87,6 @@ export function useSync() {
       }
 
       if (txsToUpsertRaw.length > 0) {
-        // Prepara os dados para o formato esperado pela tabela do banco de dados
         const txsToInsert = txsToUpsertRaw.map((tx) => ({
           id: tx.id,
           family_id: userProfile.family_id,
@@ -99,6 +98,11 @@ export function useSync() {
           date: tx.date,
           cleared: tx.cleared,
           entity_id: tx.entity_id,
+          recurrence_type: tx.recurrence_type || "single",
+          installments_total: tx.installments_total || null,
+          installment_number: tx.installment_number || null,
+          interval: tx.interval || null,
+          parent_transaction_id: tx.parent_transaction_id || null,
         }));
 
         // Executa inserção em lote (upsert para evitar duplicidade de id)
