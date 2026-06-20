@@ -62,27 +62,16 @@ export default function ShoppingList() {
   useEffect(() => {
     async function init() {
       try {
-        // Anonymous login
-        const { data: authData, error: authError } = await supabase.auth.getSession();
-        
-        let user = authData?.session?.user;
-        
-        if (!user) {
-          const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-          if (anonError) console.error("Error signing in anonymously", anonError);
-          user = anonData?.user || undefined;
-        }
-
-        if (user) {
-          setUserId(user.id);
+        // Try to obtain existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUserId(session.user.id);
         } else {
-          // Fallback UUID if no user was returned (e.g. anon auth disabled)
-          setUserId("00000000-0000-0000-0000-000000000000");
+          // No session – leave userId undefined; UI will handle login flow
+          setUserId(null);
         }
       } catch (err) {
         console.error("Auth init failed", err);
-        // Fallback UUID on network error
-        setUserId("00000000-0000-0000-0000-000000000000");
       } finally {
         fetchItems();
       }
